@@ -1,0 +1,13 @@
+{# Bandeau d'information DSFR (notice) : type, titre, description et lien facultatifs ; non refermable dans un contenu. #}
+{% set v = c.values %}
+<div class="fr-notice fr-notice--{{ v.type }}{{ v.icon == 'no' and v.type in ['info', 'warning', 'alert'] ? ' fr-notice--no-icon' }} fr-mb-6v">
+    <div class="fr-container fr-container--fluid">
+        <div class="fr-notice__body">
+            <p>
+                <span class="fr-notice__title">{{ v.title }}</span>
+                {% if v.description %}<span class="fr-notice__desc">{{ v.description }}</span>{% endif %}
+                {% if v.url %}<a class="fr-notice__link" href="{{ v.url }}">{{ v['link-label'] ?: 'En savoir plus' }}</a>{% endif %}
+            </p>
+        </div>
+    </div>
+</div>

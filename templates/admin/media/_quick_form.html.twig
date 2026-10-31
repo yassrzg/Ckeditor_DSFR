@@ -1,0 +1,15 @@
+{#
+ # Ajout à la médiathèque depuis l'éditeur (étape « Médiathèque » de la fenêtre des composants) : champs du formulaire
+ # de la médiathèque, sans balise form (la fenêtre est dans le formulaire de la page) ; envoyés par le contrôleur
+ # Stimulus ckeditor-dsfr, qui les détache du formulaire de la page (attribut form).
+ #}
+{% form_theme form '@CkeditorDsfr/form/fields.html.twig' %}
+<div class="cmp-library__add-form" role="group" aria-labelledby="media-quick-add-title">
+    <p class="fr-text--bold fr-mb-2v" id="media-quick-add-title">Ajouter {{ media.image ? 'une image' : 'un document' }} à la médiathèque</p>
+    {{ form_errors(form) }}
+    {{ form_widget(form) }}
+    <ul class="fr-btns-group fr-btns-group--inline-sm fr-btns-group--icon-left">
+        <li><button type="button" class="fr-btn fr-btn--icon-left fr-icon-save-line" data-action="ckeditor-dsfr#saveMedia">Enregistrer et sélectionner</button></li>
+        <li><button type="button" class="fr-btn fr-btn--secondary fr-btn--icon-left fr-icon-close-line" data-action="ckeditor-dsfr#cancelMedia">Annuler</button></li>
+    </ul>
+</div>

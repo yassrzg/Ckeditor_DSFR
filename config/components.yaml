@@ -1,0 +1,401 @@
+# Catalogue des composants de l'éditeur (lu à la compilation du conteneur : vider le cache après modification).
+#
+# Une modification ici s'applique partout : fenêtre de réglages de l'éditeur, filtre HTML, contrôle à l'enregistrement,
+# page des réglages de l'administrateur et rendu. Le HTML DSFR de chaque composant est dans
+# templates/components/<nom>.html.twig (et templates/groups/<groupe>.html.twig) : seule une évolution de la structure
+# HTML du DSFR demande de modifier le gabarit.
+#
+# Un projet ajoute ou remplace des composants par ses propres fichiers (option ckeditor_dsfr.component_files, même
+# format ; un composant du même nom remplace celui du bundle, « enabled: false » le retire).
+#
+# Format d'un composant :
+#   label, description, icon (icône DSFR de la liste de choix)
+#   group      : composants consécutifs affichés ensemble (groups/<groupe>.html.twig)
+#   layout     : bloc de colonnes (réglage « columns » « 4-8 », zone « column » répétée)
+#   legacy     : ancien composant, lu et modifiable mais plus proposé
+#   width      : largeur minimale dans une colonne (grille de 12) : {min, grouped, per_media, when}
+#   slots      : zones rédigées dans l'éditeur : {label, inline, required, components}
+#   fields     : réglages (attribut data-<nom>) :
+#     type        text | textarea | url | choice | media | medias | icon | pictogram
+#     label, hint, required, max_length, default
+#     options     liste de valeurs (valeur: libellé) ou « @nom » d'une liste de « lists »
+#     media_type  image | document (media, medias)
+#     when        {réglage: [valeurs]} : proposé si le réglage vaut l'une des valeurs
+#     when_filled [réglages] : proposé si l'un est renseigné ; when_empty : réglage : proposé s'il est vide
+#     option_when {valeur: {réglage: [valeurs]}} : valeur de la liste proposée sous condition
+#     items       réglages propres à chaque média d'un champ medias (mêmes clés, types choice, text, icon, pictogram)
+#     items_when  {réglage: [valeurs]} : réglages par média proposés sous condition
+# « {video_hosts} » dans une aide est remplacé par les plateformes vidéo autorisées.
+
+lists:
+    ratios:
+        16x9: Paysage (16:9)
+        32x9: Bandeau (32:9)
+        4x3: Classique (4:3)
+        3x2: Photo (3:2)
+        1x1: Carré (1:1)
+        3x4: Portrait (3:4)
+        2x3: Portrait allongé (2:3)
+    accent_colors:
+        default: Bleu France (par défaut)
+        green-tilleul-verveine: Vert tilleul verveine
+        green-bourgeon: Vert bourgeon
+        green-emeraude: Vert émeraude
+        green-menthe: Vert menthe
+        green-archipel: Vert archipel
+        blue-ecume: Bleu écume
+        blue-cumulus: Bleu cumulus
+        purple-glycine: Violet glycine
+        pink-macaron: Rose macaron
+        pink-tuile: Rose tuile
+        yellow-tournesol: Jaune tournesol
+        yellow-moutarde: Jaune moutarde
+        orange-terre-battue: Orange terre battue
+        brown-cafe-creme: Marron café crème
+        brown-caramel: Marron caramel
+        brown-opera: Marron opéra
+        beige-gris-galet: Beige gris galet
+    orientations:
+        vertical: Verticale
+        horizontal: Horizontale
+    card_orientations:
+        vertical: Verticale
+        horizontal: Horizontale
+        horizontal-tier: Horizontale, image sur un tiers
+        horizontal-half: Horizontale, image sur la moitié
+    sizes:
+        md: Moyenne
+        sm: Petite
+        lg: Grande
+    surfaces:
+        default: Bordure (par défaut)
+        grey: Fond gris
+        no-border: Sans bordure
+        no-background: Sans fond
+        shadow: Ombre portée
+    button_styles:
+        primary: Principal
+        secondary: Secondaire
+        tertiary: Tertiaire
+        tertiary-no-outline: Tertiaire sans bordure
+    badge_types:
+        info: Information
+        success: Succès
+        warning: Avertissement
+        error: Erreur
+        new: Nouveau
+        green-tilleul-verveine: Vert tilleul verveine
+        green-bourgeon: Vert bourgeon
+        green-emeraude: Vert émeraude
+        green-menthe: Vert menthe
+        green-archipel: Vert archipel
+        blue-ecume: Bleu écume
+        blue-cumulus: Bleu cumulus
+        purple-glycine: Violet glycine
+        pink-macaron: Rose macaron
+        pink-tuile: Rose tuile
+        yellow-tournesol: Jaune tournesol
+        yellow-moutarde: Jaune moutarde
+        orange-terre-battue: Orange terre battue
+        brown-cafe-creme: Marron café crème
+        brown-caramel: Marron caramel
+        brown-opera: Marron opéra
+        beige-gris-galet: Beige gris galet
+    icon_positions:
+        left: À gauche du libellé
+        right: À droite du libellé
+    # Dispositions du bloc « Colonnes » : largeurs dans la grille DSFR de 12 colonnes (fr-col-md-* ou fr-col-lg-*).
+    column_layouts:
+        6-6: 2 colonnes égales (6 + 6)
+        4-8: '2 colonnes : un tiers, deux tiers (4 + 8)'
+        8-4: '2 colonnes : deux tiers, un tiers (8 + 4)'
+        3-9: '2 colonnes : un quart, trois quarts (3 + 9)'
+        9-3: '2 colonnes : trois quarts, un quart (9 + 3)'
+        5-7: 2 colonnes (5 + 7)
+        7-5: 2 colonnes (7 + 5)
+        4-4-4: 3 colonnes égales (4 + 4 + 4)
+        3-6-3: 3 colonnes, centrale large (3 + 6 + 3)
+        6-3-3: 3 colonnes, première large (6 + 3 + 3)
+        3-3-6: 3 colonnes, dernière large (3 + 3 + 6)
+        3-3-3-3: 4 colonnes égales (3 + 3 + 3 + 3)
+
+components:
+    image:
+        label: Image
+        description: 'Image de la médiathèque : format, taille (petite, moyenne, grande) et légende.'
+        icon: fr-icon-image-line
+        fields:
+            media-id: {type: media, label: Image, media_type: image, hint: Le texte alternatif est celui de la médiathèque.}
+            ratio: {type: choice, label: Format, options: '@ratios'}
+            size: {type: choice, label: Taille, options: {lg: Grande (largeur du texte), md: Moyenne (moitié), sm: Petite (un tiers)}}
+            caption: {type: text, label: Légende, hint: 'Facultatif : source, crédit, explication.'}
+
+    columns:
+        label: Colonnes
+        description: Texte, composants et médias sur 2 à 4 colonnes de la grille DSFR, l'une sous l'autre sur téléphone.
+        icon: fr-icon-layout-grid-line
+        layout: true
+        fields:
+            columns: {type: choice, label: Disposition, options: '@column_layouts', hint: Largeurs sur une grille de 12 colonnes. Réduire le nombre de colonnes regroupe le contenu des colonnes retirées dans la dernière.}
+            breakpoint: {type: choice, label: Côte à côte, options: {md: À partir de la tablette, lg: Sur ordinateur seulement}}
+            align: {type: choice, label: Alignement vertical, options: {top: En haut, middle: Au centre, bottom: En bas}}
+        slots:
+            column: {label: Colonne, components: true}
+
+    media-text:
+        label: Image et texte
+        description: Image à gauche et texte à droite, ou l'inverse (l'un sous l'autre sur mobile).
+        icon: fr-icon-layout-grid-line
+        legacy: true
+        fields:
+            media-id: {type: media, label: Image, media_type: image, hint: Le texte alternatif est celui de la médiathèque.}
+            position: {type: choice, label: Position de l'image, options: {left: À gauche (texte à droite), right: À droite (texte à gauche)}}
+            size: {type: choice, label: Largeur de l'image, options: {md: Moitié, sm: Un tiers, lg: Deux tiers}}
+            ratio: {type: choice, label: Format, options: '@ratios'}
+            caption: {type: text, label: Légende, hint: 'Facultatif : source, crédit, explication.'}
+        slots:
+            body: {label: Contenu}
+
+    download:
+        label: Documents à télécharger
+        description: 'Un ou plusieurs documents de la médiathèque : liens, cartes ou tuiles (format et poids affichés).'
+        icon: fr-icon-download-line
+        width: {min: 3, per_media: media-ids, when: {variant: [card, tile]}}
+        fields:
+            media-ids:
+                type: medias
+                label: Documents
+                media_type: document
+                hint: 'Ordre d’affichage : glisser-déposer ou boutons Monter / Descendre. « Personnaliser » règle un document (cartes et tuiles).'
+                items_when: {variant: [card, tile]}
+                items:
+                    pictogram: {type: pictogram, label: Pictogramme, hint: Remplace celui du composant pour ce document.}
+                    surface: {type: choice, label: Apparence, options: '@surfaces', required: false}
+            variant: {type: choice, label: Affichage, options: {link: Liens, card: Cartes en grille, tile: Tuiles en grille}}
+            # Carte de téléchargement toujours horizontale dans le DSFR (pas de classe verticale) : orientation des tuiles seulement.
+            orientation: {type: choice, label: Orientation, options: '@orientations', hint: 'Horizontale : pictogramme à gauche du texte.', when: {variant: [tile]}}
+            size: {type: choice, label: Taille, options: '@sizes', when: {variant: [card, tile]}, option_when: {lg: {variant: [card]}}}
+            surface: {type: choice, label: Apparence, options: '@surfaces', when: {variant: [card, tile]}}
+            pictogram: {type: pictogram, label: Pictogramme, hint: 'Illustration du DSFR (tuiles : « document à télécharger » par défaut).', when: {variant: [card, tile]}}
+
+    card:
+        label: Carte
+        description: 'Carte avec lien : plusieurs cartes ou tuiles à la suite forment une grille (1 à 4 colonnes).'
+        icon: fr-icon-layout-grid-line
+        group: cards
+        width: {min: 3, grouped: true}
+        fields:
+            title: {type: text, label: Titre, required: true, max_length: 255}
+            description: {type: textarea, label: Description, max_length: 500}
+            url: {type: url, label: Lien, required: false, hint: 'Facultatif : toute la carte devient cliquable. Adresse complète (https://…) ou page du site (commençant par /).'}
+            media-id: {type: media, label: Image, media_type: image, required: false}
+            pictogram: {type: pictogram, label: Pictogramme, hint: 'Facultatif : illustration du DSFR en en-tête, à la place d''une image.', when_empty: media-id}
+            badge: {type: text, label: Badge, hint: 'Facultatif : courte mention en haut de la carte (ex. « Nouveau »).', max_length: 40}
+            badge-type: {type: choice, label: Type du badge, options: '@badge_types', when_filled: [badge]}
+            detail: {type: text, label: Détail, hint: 'Facultatif : courte mention sous la description (ex. « Mis à jour en 2026 »).', max_length: 100}
+            icon: {type: icon, label: Icône du détail, hint: 'Facultatif : icône du DSFR devant le détail.', when_filled: [detail]}
+            # Orientation sans effet sans en-tête (le DSFR ne déplace que l'image ou le pictogramme).
+            orientation: {type: choice, label: Orientation, options: '@card_orientations', hint: 'Horizontale : image ou pictogramme à gauche du texte, à partir de la tablette (la carte reste verticale sur téléphone).', when_filled: [media-id, pictogram]}
+            size: {type: choice, label: Taille, options: '@sizes'}
+            surface: {type: choice, label: Apparence, options: '@surfaces'}
+
+    tile:
+        label: Tuile
+        description: 'Tuile avec pictogramme du DSFR et lien : plusieurs tuiles ou cartes à la suite forment une grille.'
+        icon: fr-icon-dashboard-3-line
+        group: cards
+        width: {min: 3, grouped: true}
+        fields:
+            title: {type: text, label: Titre, required: true, max_length: 255}
+            description: {type: textarea, label: Description, max_length: 300}
+            url: {type: url, label: Lien, hint: Adresse complète (https://…) ou page du site (commençant par /).}
+            pictogram: {type: pictogram, label: Pictogramme, hint: 'Facultatif : illustration du DSFR.'}
+            orientation: {type: choice, label: Orientation, options: '@orientations', hint: 'Horizontale : pictogramme à gauche du texte.', when_filled: [pictogram]}
+            size: {type: choice, label: Taille, options: {md: Moyenne, sm: Petite}}
+            surface: {type: choice, label: Apparence, options: '@surfaces'}
+
+    button:
+        label: Bouton
+        description: 'Bouton lien, icône facultative : plusieurs boutons à la suite forment un groupe.'
+        icon: fr-icon-cursor-line
+        group: buttons
+        fields:
+            label: {type: text, label: Libellé, required: true, max_length: 100}
+            url: {type: url, label: Lien, hint: Adresse complète (https://…) ou page du site (commençant par /).}
+            style: {type: choice, label: Style, options: '@button_styles'}
+            size: {type: choice, label: Taille, options: '@sizes'}
+            icon: {type: icon, label: Icône, hint: 'Facultatif : icône du DSFR, le libellé reste affiché.'}
+            icon-position: {type: choice, label: Position de l'icône, options: '@icon_positions', when_filled: [icon]}
+
+    modal-button:
+        label: Bouton avec fenêtre
+        description: 'Bouton qui ouvre une fenêtre (modale DSFR) : titre et contenu rédigés dans l''éditeur ; en groupe avec les boutons.'
+        icon: fr-icon-window-line
+        group: buttons
+        fields:
+            label: {type: text, label: Libellé du bouton, required: true, max_length: 100}
+            style: {type: choice, label: Style, options: '@button_styles'}
+            size: {type: choice, label: Taille, options: '@sizes'}
+            icon: {type: icon, label: Icône, hint: 'Facultatif : icône du DSFR, le libellé reste affiché.'}
+            icon-position: {type: choice, label: Position de l'icône, options: '@icon_positions', when_filled: [icon]}
+            modal-size: {type: choice, label: Largeur de la fenêtre, options: {md: Moyenne, sm: Petite, lg: Grande}}
+        slots:
+            title: {label: Titre de la fenêtre, inline: true, required: true}
+            body: {label: Contenu de la fenêtre}
+
+    accordion:
+        label: Accordéon
+        description: 'Titre et contenu repliable : plusieurs accordéons à la suite forment un groupe.'
+        icon: fr-icon-arrow-down-s-line
+        group: accordions
+        slots:
+            title: {label: Titre, inline: true, required: true}
+            body: {label: Contenu}
+
+    tab:
+        label: Onglet
+        description: Plusieurs onglets à la suite forment un groupe d'onglets.
+        icon: fr-icon-folder-2-line
+        group: tabs
+        slots:
+            title: {label: Titre, inline: true, required: true}
+            body: {label: Contenu}
+
+    table:
+        label: Tableau
+        description: 'Tableau DSFR : titre (lu par les lecteurs d''écran), lignes et colonnes rédigées dans l''éditeur, bordures, taille et couleur.'
+        icon: fr-icon-table-line
+        fields:
+            caption: {type: text, label: Titre du tableau, required: true, max_length: 255, hint: Décrit le contenu du tableau (exigé par le RGAA).}
+            caption-display: {type: choice, label: Affichage du titre, options: {top: Au-dessus, bottom: En dessous, hidden: Masqué (lu par les lecteurs d'écran seulement)}}
+            size: {type: choice, label: Taille, options: '@sizes'}
+            bordered: {type: choice, label: Bordures, options: {'no': Lignes seulement, 'yes': Toutes les cellules}}
+            layout: {type: choice, label: Largeur des colonnes, options: {auto: Selon le contenu, fixed: Égales}}
+            color: {type: choice, label: Couleur, options: '@accent_colors'}
+        slots:
+            body: {label: Tableau, tables: true}
+
+    callout:
+        label: Mise en avant
+        description: 'Encadré pour une information importante : titre facultatif, couleur et icône au choix.'
+        icon: fr-icon-information-line
+        fields:
+            color: {type: choice, label: Couleur, options: '@accent_colors'}
+            icon: {type: icon, label: Icône, hint: 'Facultatif : icône du DSFR devant le titre.'}
+        slots:
+            title: {label: Titre (facultatif), inline: true}
+            body: {label: Contenu}
+
+    highlight:
+        label: Mise en exergue
+        description: Texte souligné d'un trait vertical, couleur au choix.
+        icon: fr-icon-quote-line
+        fields:
+            color: {type: choice, label: Couleur, options: '@accent_colors'}
+        slots:
+            body: {label: Contenu, required: true}
+
+    alert:
+        label: Alerte
+        description: 'Message d''information, de succès, d''avertissement ou d''erreur ; titre facultatif.'
+        icon: fr-icon-alert-line
+        fields:
+            type: {type: choice, label: Type, options: {info: Information, success: Succès, warning: Avertissement, error: Erreur}}
+        slots:
+            title: {label: Titre (facultatif), inline: true}
+            body: {label: Contenu}
+
+    notice:
+        label: Bandeau d'information
+        description: 'Bandeau DSFR (notice) : information, avertissement ou alerte, avec un lien facultatif.'
+        icon: fr-icon-notification-3-line
+        fields:
+            type:
+                type: choice
+                label: Type
+                options:
+                    info: Information
+                    warning: Avertissement
+                    alert: Alerte
+                    weather-orange: Vigilance météo orange
+                    weather-red: Vigilance météo rouge
+                    weather-purple: Vigilance météo violette
+                    kidnapping: Alerte enlèvement
+                    attack: Alerte attentat
+                    witness: Appel à témoins
+                    cyberattack: Cyberattaque
+            title: {type: text, label: Titre, required: true, max_length: 255}
+            description: {type: textarea, label: Description, max_length: 500}
+            url: {type: url, label: Lien, required: false, hint: 'Facultatif : adresse complète (https://…) ou page du site (commençant par /).'}
+            link-label: {type: text, label: Libellé du lien, max_length: 100, when_filled: [url], hint: Par défaut « En savoir plus ».}
+            icon: {type: choice, label: Icône, options: {'yes': Icône du type, 'no': Sans icône}, option_when: {'no': {type: [info, warning, alert]}}}
+
+    badge:
+        label: Badge
+        description: 'Courte mention d''état (nouveau, validé, en cours…) : plusieurs badges à la suite forment un groupe.'
+        icon: fr-icon-award-line
+        group: badges
+        fields:
+            label: {type: text, label: Libellé, required: true, max_length: 40}
+            type: {type: choice, label: Type, options: '@badge_types'}
+            size: {type: choice, label: Taille, options: {md: Moyenne, sm: Petite}}
+            icon: {type: choice, label: Icône, options: {'yes': Icône du type, 'no': Sans icône}, when: {type: [success, error, info, warning, new]}}
+
+    tag:
+        label: Tag
+        description: 'Mot-clé, simple ou cliquable : plusieurs tags à la suite forment un groupe.'
+        icon: fr-icon-hashtag
+        group: tags
+        fields:
+            label: {type: text, label: Libellé, required: true, max_length: 60}
+            url: {type: url, label: Lien, required: false, hint: 'Facultatif : tag cliquable.'}
+            size: {type: choice, label: Taille, options: {md: Moyenne, sm: Petite}}
+            color: {type: choice, label: Couleur, options: '@accent_colors', when_filled: [url]}
+            icon: {type: icon, label: Icône, hint: 'Facultatif : icône du DSFR à gauche du libellé.'}
+
+    icon:
+        label: Icône
+        description: 'Icône du DSFR, seule ou suivie d''un court texte : taille et alignement au choix.'
+        icon: fr-icon-star-line
+        fields:
+            icon: {type: icon, label: Icône, required: true}
+            text: {type: text, label: Texte, max_length: 150, hint: 'Facultatif : affiché à droite de l''icône.'}
+            alt: {type: text, label: Texte pour les lecteurs d'écran, max_length: 150, when_empty: text, hint: 'Facultatif : si l''icône seule porte une information ; vide, elle est décorative.'}
+            size: {type: choice, label: Taille, options: {md: Moyenne, xs: Très petite, sm: Petite, lg: Grande}}
+            align: {type: choice, label: Alignement, options: {left: À gauche, center: Centrée, right: À droite}}
+
+    pictogram:
+        label: Pictogramme
+        description: 'Illustration du DSFR (pictogramme) : taille, alignement, texte alternatif facultatif.'
+        icon: fr-icon-shapes-line
+        fields:
+            pictogram: {type: pictogram, label: Pictogramme, required: true}
+            alt: {type: text, label: Texte alternatif, max_length: 150, hint: 'Facultatif : si le pictogramme porte une information ; vide, il est décoratif.'}
+            size: {type: choice, label: Taille, options: {md: Moyen (80 px), sm: Petit (56 px), lg: Grand (120 px)}}
+            align: {type: choice, label: Alignement, options: {left: À gauche, center: Centré, right: À droite}}
+
+    quote:
+        label: Citation
+        description: Citation avec son auteur, sa source, une image facultative et une couleur au choix.
+        icon: fr-icon-chat-quote-line
+        fields:
+            author: {type: text, label: Auteur, max_length: 255}
+            source: {type: text, label: Source, max_length: 255, hint: 'Ex. titre de l''ouvrage ou de l''article.'}
+            source-url: {type: url, label: Lien de la source, required: false, when_filled: [source]}
+            details: {type: text, label: Précisions, max_length: 255, hint: 'Facultatif : date, page, fonction de l''auteur…'}
+            # Image : disposition imposée par le DSFR (fr-quote--column : ronde à côté de l'auteur sur téléphone, à gauche sur ordinateur).
+            media-id: {type: media, label: Image, media_type: image, required: false, hint: 'Facultatif : portrait de l''auteur ou illustration (décorative), à gauche de la citation.'}
+            color: {type: choice, label: Couleur, options: '@accent_colors'}
+        slots:
+            body: {label: Citation, required: true}
+
+    video:
+        label: Vidéo
+        description: Vidéo hébergée sur une plateforme autorisée, avec sa transcription.
+        icon: fr-icon-play-circle-line
+        width: {min: 4}
+        fields:
+            url: {type: url, label: Adresse de la vidéo, hint: 'Plateformes autorisées : {video_hosts} (réglages de l''éditeur).'}
+            title: {type: text, label: Titre de la vidéo, required: true, max_length: 255, hint: Annoncé aux lecteurs d'écran.}
+            caption: {type: text, label: Légende}
+            transcription: {type: textarea, label: Transcription, hint: Texte de la vidéo (exigé par le RGAA pour une vidéo parlée).}

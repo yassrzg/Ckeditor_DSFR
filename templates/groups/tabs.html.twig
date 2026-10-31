@@ -1,0 +1,14 @@
+{# Onglets consécutifs : liste des titres puis un panneau par onglet (motif ARIA tabs du DSFR). #}
+<div class="fr-tabs fr-mb-6v">
+    <ul class="fr-tabs__list" role="tablist" aria-label="Onglets">
+        {% for item in items %}
+            <li role="presentation">
+                <button type="button" id="{{ item.id }}-tab" class="fr-tabs__tab" tabindex="{{ loop.first ? 0 : -1 }}" role="tab"
+                        aria-selected="{{ loop.first ? 'true' : 'false' }}" aria-controls="{{ item.id }}-panel">{{ item.slots.title|striptags|raw }}</button>
+            </li>
+        {% endfor %}
+    </ul>
+    {% for item in items %}
+        <div id="{{ item.id }}-panel" class="fr-tabs__panel{{ loop.first ? ' fr-tabs__panel--selected' }}" role="tabpanel" aria-labelledby="{{ item.id }}-tab" tabindex="0">{{ item.html|raw }}</div>
+    {% endfor %}
+</div>

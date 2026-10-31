@@ -1,0 +1,67 @@
+{#
+ # Classes des variantes DSFR d'un composant (block : fr-card, fr-tile) : orientation horizontale (et proportion de
+ # l'image pour une carte), taille, apparence. Valeurs déjà validées par ContentRenderer (listes de ComponentRegistry).
+ #}
+{% macro variants(block, values) -%}
+    {%- set orientation = values.orientation ?? 'vertical' -%}
+    {%- if orientation starts with 'horizontal' %} {{ block }}--horizontal{% if orientation != 'horizontal' %} {{ block }}--{{ orientation }}{% endif %}{% endif -%}
+    {%- if (values.size ?? 'md') != 'md' %} {{ block }}--{{ values.size }}{% endif -%}
+    {%- if (values.surface ?? 'default') != 'default' %} {{ block }}--{{ values.surface }}{% endif -%}
+{%- endmacro %}
+
+{# Classes d'un bouton DSFR (bouton lien, bouton qui ouvre une fenêtre) : style, taille, icône à gauche ou à droite. #}
+{% macro button_classes(values) -%}
+    fr-btn{{ values.style != 'primary' ? ' fr-btn--' ~ values.style }}{{ values.size != 'md' ? ' fr-btn--' ~ values.size }}{{ values.icon ? ' fr-btn--icon-' ~ values['icon-position'] ~ ' ' ~ values.icon }}
+{%- endmacro %}
+
+{# Badge DSFR : type (état ou couleur d'accentuation), taille, icône des badges d'état. #}
+{% macro badge(label, type, size = 'md', icon = 'yes') -%}
+    <p class="fr-badge fr-badge--{{ type }}{{ size == 'sm' ? ' fr-badge--sm' }}{{ icon == 'no' ? ' fr-badge--no-icon' }}">{{ label }}</p>
+{%- endmacro %}
+
+{# Colonnes d'une grille de cartes ou de tuiles : 1 à 4 selon leur nombre, 2 au plus si elles sont horizontales. #}
+{% macro grid_col(count, horizontal) -%}
+    {%- if count == 1 %}fr-col-12
+    {%- elseif count == 2 or horizontal %}fr-col-12 fr-col-md-6
+    {%- elseif count == 3 %}fr-col-12 fr-col-md-4
+    {%- else %}fr-col-12 fr-col-md-6 fr-col-lg-3{% endif -%}
+{%- endmacro %}
+
+{# Pictogramme du DSFR (illustration en trois couches) : décoratif, ou porteur d'information avec un texte alternatif. #}
+{% macro pictogram(path, size = 80, alt = null) %}
+    {% set picto = ckeditor_dsfr_pictogram_url(path) %}
+    <svg {% if alt %}role="img" aria-label="{{ alt }}"{% else %}aria-hidden="true"{% endif %} class="fr-artwork" viewBox="0 0 80 80" width="{{ size }}px" height="{{ size }}px">
+        <use class="fr-artwork-decorative" href="{{ picto }}#artwork-decorative"></use>
+        <use class="fr-artwork-minor" href="{{ picto }}#artwork-minor"></use>
+        <use class="fr-artwork-major" href="{{ picto }}#artwork-major"></use>
+    </svg>
+{% endmacro %}
+
+{# En-tête de carte avec un pictogramme du DSFR (à la place d'une image). #}
+{% macro card_pictogram(pictogram) %}
+    <div class="fr-card__header cmp-card__pictogram">{{ _self.pictogram(pictogram) }}</div>
+{% endmacro %}
+
+{#
+ # Tuile DSFR (composant Tuile, documents à télécharger en tuiles) : pictogramme du DSFR facultatif, variantes.
+ # download : tuile de téléchargement (lien download, détail : format et poids).
+ #}
+{% macro tile(title, url, values, options = {}) %}
+    {% set o = {description: null, detail: null, download: false}|merge(options) %}
+    {#- Tuile de téléchargement horizontale par défaut dans le DSFR : « verticale » = fr-tile--vertical@md (horizontale sur téléphone). -#}
+    {% set vertical = o.download and not ((values.orientation ?? 'vertical') starts with 'horizontal') %}
+    <div class="fr-tile fr-enlarge-link{{ o.download ? ' fr-tile--download' }}{{ vertical ? ' fr-tile--vertical@md' }}{{ _self.variants('fr-tile', values) }}">
+        <div class="fr-tile__body">
+            <div class="fr-tile__content">
+                <h3 class="fr-tile__title"><a href="{{ url }}"{% if o.download %} download{% endif %}>{{ title }}</a></h3>
+                {% if o.description %}<p class="fr-tile__desc">{{ o.description }}</p>{% endif %}
+                {% if o.detail %}<p class="fr-tile__detail">{{ o.detail }}</p>{% endif %}
+            </div>
+        </div>
+        {% if values.pictogram %}
+            <div class="fr-tile__header">
+                <div class="fr-tile__pictogram">{{ _self.pictogram(values.pictogram) }}</div>
+            </div>
+        {% endif %}
+    </div>
+{% endmacro %}

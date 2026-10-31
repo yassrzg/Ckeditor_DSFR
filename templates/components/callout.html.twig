@@ -1,0 +1,5 @@
+{# Mise en avant : titre facultatif, couleur d'accentuation et icône du DSFR au choix. #}
+<div class="fr-callout{{ c.values.color != 'default' ? ' fr-callout--' ~ c.values.color }}{{ c.values.icon ? ' ' ~ c.values.icon }} fr-mb-6v">
+    {% if c.slots.title %}<h3 class="fr-callout__title">{{ c.slots.title|raw }}</h3>{% endif %}
+    {% if c.slots.body %}<div class="fr-callout__text">{{ c.slots.body|raw }}</div>{% endif %}
+</div>

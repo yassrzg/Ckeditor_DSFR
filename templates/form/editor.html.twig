@@ -1,0 +1,134 @@
+{#
+ # Thème du champ EditorType (ajouté aux thèmes de formulaire par le bundle) : CKEditor 5 chargé par le contrôleur
+ # Stimulus ckeditor-dsfr, fenêtre de réglages des composants générée depuis le ComponentRegistry (champs DSFR, sans
+ # attribut name : jamais envoyés avec le formulaire). Le libellé et les erreurs du champ suivent le thème du projet.
+ #}
+{%- block ckeditor_dsfr_widget -%}
+    {%- set dialog_id = id ~ '-component-dialog' -%}
+    <div class="ckeditor-dsfr{{ errors|length > 0 ? ' ckeditor-dsfr--error' }}" data-controller="ckeditor-dsfr"
+         data-ckeditor-dsfr-components-value="{{ ckeditor_dsfr_components_config()|json_encode }}"
+         data-ckeditor-dsfr-media-url-value="{{ path('ckeditor_dsfr_media_selection', {type: 'image'})|slice(0, -5) }}__TYPE__"
+         data-ckeditor-dsfr-artwork-url-value="{{ path('ckeditor_dsfr_artwork') }}"
+         data-ckeditor-dsfr-quick-add-url-value="{{ path('ckeditor_dsfr_media_quick_add', {type: 'image'})|slice(0, -5) }}__TYPE__"
+         data-ckeditor-dsfr-label-value="{{ label ?: 'Contenu' }}">
+        <link rel="stylesheet" href="{{ asset('@yassrzg/ckeditor-dsfr-bundle/vendor/ckeditor5/ckeditor5.css') }}">
+        {%- set attr = attr|merge({class: ('fr-input ' ~ attr.class|default(''))|trim, 'data-ckeditor-dsfr-target': 'source'}) -%}
+        <textarea {{ block('widget_attributes') }}>{{ value }}</textarea>
+        <p class="fr-hint-text" data-ckeditor-dsfr-target="status" role="status">Chargement de l’éditeur…</p>
+        <div class="cmp-notices" data-ckeditor-dsfr-target="notices"></div>
+
+        {# Déclencheur DSFR de la fenêtre (actionné par le contrôleur depuis la barre d'outils de l'éditeur). #}
+        <button type="button" class="fr-hidden" aria-controls="{{ dialog_id }}" data-fr-opened="false" data-ckeditor-dsfr-target="opener" tabindex="-1">Insérer un composant</button>
+        <dialog id="{{ dialog_id }}" class="fr-modal" aria-labelledby="{{ dialog_id }}-title" data-ckeditor-dsfr-target="dialog" data-action="dsfr.conceal->ckeditor-dsfr#focusEditor">
+            <div class="fr-container fr-container--fluid fr-container-md">
+                <div class="fr-grid-row fr-grid-row--center">
+                    <div class="fr-col-12 fr-col-md-10 fr-col-lg-8">
+                        <div class="fr-modal__body">
+                            <div class="fr-modal__header">
+                                <button type="button" class="fr-btn--close fr-btn" title="Fermer" aria-controls="{{ dialog_id }}">Fermer</button>
+                            </div>
+                            <div class="fr-modal__content">
+                                <h1 id="{{ dialog_id }}-title" class="fr-modal__title" data-ckeditor-dsfr-target="title">Insérer un composant</h1>
+                                <div data-ckeditor-dsfr-target="chooser">
+                                    <p class="fr-text--sm">Choisissez le composant à insérer à l’emplacement du curseur.</p>
+                                    <ul class="cmp-chooser fr-raw-list">
+                                        {%- for component in ckeditor_dsfr_components() %}
+                                            <li data-ckeditor-dsfr-target="choice" data-box="{{ component.hasSlots ? 1 : 0 }}" data-layout="{{ component.layout ? 1 : 0 }}">
+                                                <button type="button" class="cmp-chooser__item" data-action="ckeditor-dsfr#choose" data-ckeditor-dsfr-name-param="{{ component.name }}">
+                                                    <span class="{{ component.icon }}" aria-hidden="true"></span>
+                                                    <span><strong>{{ component.label }}</strong><span class="fr-hint-text">{{ component.description }}</span></span>
+                                                </button>
+                                            </li>
+                                        {%- endfor %}
+                                    </ul>
+                                </div>
+                                {%- for component in ckeditor_dsfr_components(false) %}
+                                    <fieldset class="fr-fieldset" data-ckeditor-dsfr-target="panel" data-component-name="{{ component.name }}" aria-labelledby="{{ dialog_id }}-{{ component.name }}-legend" hidden
+                                              data-action="change->ckeditor-dsfr#refreshConditions input->ckeditor-dsfr#refreshConditions">
+                                        <legend class="fr-fieldset__legend" id="{{ dialog_id }}-{{ component.name }}-legend">{{ component.label }} <span class="fr-hint-text">Les champs marqués d’un astérisque (*) sont obligatoires.</span></legend>
+                                        {%- for field in component.fields %}
+                                            {%- set field_id = dialog_id ~ '-' ~ component.name ~ '-' ~ field.name -%}
+                                            {%- set kind = field.type == 'choice' ? 'select' : 'input' -%}
+                                            {%- set is_media = field.type in ['media', 'medias', 'icon', 'pictogram'] -%}
+                                            <div class="fr-fieldset__element">
+                                                <div class="fr-{{ kind }}-group" data-field-group>
+                                                    <{{ is_media ? 'p' : 'label' }} class="fr-label" {{ is_media ? 'id' : 'for' }}="{{ field_id }}{{ is_media ? '-label' }}">{{ field.label }}{{ field.required ? ' *' }}
+                                                        {%- if field.hint %}<span class="fr-hint-text">{{ field.hint }}</span>{% endif -%}
+                                                    </{{ is_media ? 'p' : 'label' }}>
+                                                    {%- if field.type == 'choice' %}
+                                                        <select class="fr-select" id="{{ field_id }}" data-field="{{ field.attribute }}">
+                                                            {%- for value, option in field.options %}<option value="{{ value }}">{{ option }}</option>{% endfor -%}
+                                                        </select>
+                                                    {%- elseif is_media %}
+                                                        {#
+                                                         # Médias de la médiathèque, icônes ou pictogrammes du DSFR, choisis dans l'étape « Médiathèque » de la fenêtre ;
+                                                         # valeur : identifiants « 12,4,7 », classe d'icône ou chemin du pictogramme.
+                                                         #}
+                                                        {%- set multiple = field.type == 'medias' -%}
+                                                        {%- set kind = field.mediaType ? field.mediaType.value : field.type -%}
+                                                        {%- set texts = {
+                                                            image: ['Aucune image sélectionnée.', 'Sélectionner une image'],
+                                                            document: multiple ? ['Aucun document sélectionné.', 'Sélectionner des documents'] : ['Aucun document sélectionné.', 'Sélectionner un document'],
+                                                            icon: ['Aucune icône.', 'Choisir une icône du DSFR'],
+                                                            pictogram: ['Aucun pictogramme.', 'Choisir un pictogramme du DSFR'],
+                                                        }[kind] -%}
+                                                        <input type="hidden" id="{{ field_id }}" data-field="{{ field.attribute }}">
+                                                        {%- if field.items is not empty %}<input type="hidden" data-settings-field="{{ field.settingsAttribute }}">{% endif %}
+                                                        <div class="cmp-media" data-media-field data-media-type="{{ kind }}" data-multiple="{{ multiple ? 1 : 0 }}">
+                                                            <ul class="cmp-media__list fr-raw-list" data-media-list aria-labelledby="{{ field_id }}-label"></ul>
+                                                            <p class="fr-hint-text" data-media-empty>{{ texts[0] }}</p>
+                                                            <button type="button" class="fr-btn fr-btn--secondary fr-btn--sm fr-btn--icon-left {{ kind in ['icon', 'pictogram'] ? 'fr-icon-palette-line' : 'fr-icon-folder-2-line' }}" aria-describedby="{{ field_id }}-label"
+                                                                    data-media-open data-action="ckeditor-dsfr#openLibrary" data-ckeditor-dsfr-field-param="{{ field.attribute }}">
+                                                                {{- texts[1] -}}
+                                                            </button>
+                                                        </div>
+                                                    {%- elseif field.type == 'textarea' %}
+                                                        <textarea class="fr-input" id="{{ field_id }}" rows="5" maxlength="{{ field.maxLength }}" data-field="{{ field.attribute }}"{% if field.required %} aria-required="true"{% endif %}></textarea>
+                                                    {%- else %}
+                                                        <input class="fr-input" type="text" id="{{ field_id }}" maxlength="{{ field.maxLength }}" data-field="{{ field.attribute }}"
+                                                               {%- if field.type == 'url' %} inputmode="url" spellcheck="false"{% endif %}{% if field.required %} aria-required="true"{% endif %}
+                                                               data-action="keydown.enter->ckeditor-dsfr#submit:prevent">
+                                                    {%- endif %}
+                                                    <p class="fr-error-text" id="{{ field_id }}-error" data-field-error hidden></p>
+                                                </div>
+                                            </div>
+                                        {%- endfor %}
+                                    </fieldset>
+                                {%- endfor %}
+
+                                {# Étape « Médiathèque » : choix des images ou des documents (cases à cocher, ou boutons radio pour un seul média). #}
+                                <div class="cmp-library" data-ckeditor-dsfr-target="library" hidden>
+                                    <div class="fr-input-group">
+                                        <label class="fr-label" for="{{ dialog_id }}-library-search">Rechercher dans la médiathèque</label>
+                                        <input class="fr-input" type="search" id="{{ dialog_id }}-library-search" autocomplete="off"
+                                               data-ckeditor-dsfr-target="librarySearch" data-action="input->ckeditor-dsfr#renderLibrary keydown.enter->ckeditor-dsfr#renderLibrary:prevent">
+                                    </div>
+                                    <p class="fr-text--sm fr-mb-2v" role="status" data-ckeditor-dsfr-target="libraryStatus"></p>
+                                    <fieldset class="fr-fieldset" aria-labelledby="{{ dialog_id }}-title">
+                                        <ul class="cmp-library__grid fr-raw-list" data-ckeditor-dsfr-target="libraryGrid"></ul>
+                                    </fieldset>
+                                    {# Ajout d'un fichier à la médiathèque sans quitter l'éditeur (champs chargés à la demande). #}
+                                    <p class="fr-mb-2v">
+                                        <button type="button" class="fr-btn fr-btn--secondary fr-btn--sm fr-btn--icon-left fr-icon-add-line" data-ckeditor-dsfr-target="libraryAddButton" data-action="ckeditor-dsfr#addMedia">Ajouter à la médiathèque</button>
+                                    </p>
+                                    <div class="cmp-library__add" data-ckeditor-dsfr-target="libraryAdd" hidden></div>
+                                    <ul class="fr-btns-group fr-btns-group--right fr-btns-group--inline-reverse fr-btns-group--inline-sm">
+                                        <li><button type="button" class="fr-btn" data-ckeditor-dsfr-target="libraryValidate" data-action="ckeditor-dsfr#validateLibrary">Valider la sélection</button></li>
+                                        <li><button type="button" class="fr-btn fr-btn--secondary" data-action="ckeditor-dsfr#closeLibrary">Retour</button></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="fr-modal__footer" data-ckeditor-dsfr-target="footer">
+                                <ul class="fr-btns-group fr-btns-group--right fr-btns-group--inline-reverse fr-btns-group--inline-lg">
+                                    <li><button type="button" class="fr-btn" data-ckeditor-dsfr-target="submit" data-action="ckeditor-dsfr#submit" hidden>Insérer</button></li>
+                                    <li><button type="button" class="fr-btn fr-btn--secondary" data-ckeditor-dsfr-target="back" data-action="ckeditor-dsfr#back" hidden>Changer de composant</button></li>
+                                    <li><button type="button" class="fr-btn fr-btn--tertiary" aria-controls="{{ dialog_id }}">Annuler</button></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </dialog>
+    </div>
+{%- endblock ckeditor_dsfr_widget -%}

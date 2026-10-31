@@ -1,0 +1,5 @@
+{# Pictogramme du DSFR (illustration en trois couches), taille et alignement ; décoratif sans texte alternatif. #}
+{% import '@CkeditorDsfr/_macros.html.twig' as editor %}
+<div class="cmp-artwork cmp-artwork--{{ c.values.align }} fr-mb-6v">
+    {{ editor.pictogram(c.values.pictogram, {sm: 56, md: 80, lg: 120}[c.values.size], c.values.alt) }}
+</div>

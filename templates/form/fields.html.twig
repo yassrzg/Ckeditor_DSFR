@@ -1,0 +1,103 @@
+{#
+ # Thème DSFR des formulaires des pages du bundle (médiathèque, réglages) : indépendant du thème du projet.
+ # Récapitulatif des erreurs en tête, aide dans le libellé, cases à cocher et interrupteurs DSFR.
+ #}
+{% use 'form_div_layout.html.twig' %}
+
+{%- block form_start -%}
+    {{- parent() -}}
+    {%- if form.parent is null and form.vars.submitted and not form.vars.valid -%}
+        <div class="fr-alert fr-alert--error fr-mb-6v" role="alert" id="{{ id }}-errors" tabindex="-1">
+            <h2 class="fr-alert__title">Le formulaire n’a pas été enregistré</h2>
+            <ul class="fr-mb-0">
+                {%- for error in form.vars.errors -%}<li>{{ error.message }}</li>{%- endfor -%}
+                {%- for child in form.children|filter(c => c.vars.errors|length > 0) -%}
+                    {%- for error in child.vars.errors -%}<li><a href="#{{ child.vars.id }}">{{ child.vars.label }}</a> : {{ error.message }}</li>{%- endfor -%}
+                {%- endfor -%}
+            </ul>
+        </div>
+    {%- endif -%}
+{%- endblock form_start -%}
+
+{%- block form_row -%}
+    {%- set widget_attr = help is not empty ? {attr: {'aria-describedby': id ~ '_help'}} : {} -%}
+    {%- set group_class = compound ? 'fr-fieldset__element' : (block_prefixes[1] == 'choice' and not expanded ? 'fr-select-group' : 'fr-input-group') -%}
+    <div class="{{ group_class }}{{ errors|length > 0 ? ' ' ~ group_class ~ '--error' }}">
+        {{- form_label(form) -}}
+        {{- form_widget(form, widget_attr) -}}
+        {{- form_errors(form) -}}
+    </div>
+{%- endblock form_row -%}
+
+{%- block form_label -%}
+    {%- if label is not same as(false) -%}
+        <{{ element|default('label') }} class="fr-label"{% if not compound %} for="{{ id }}"{% endif %}>
+            {{- label -}}
+            {%- if required %}<span aria-hidden="true"> *</span><span class="fr-sr-only"> (obligatoire)</span>{% endif -%}
+            {%- if help is not empty %}<span class="fr-hint-text" id="{{ id }}_help">{{ help }}</span>{% endif -%}
+        </{{ element|default('label') }}>
+    {%- endif -%}
+{%- endblock form_label -%}
+
+{%- block form_help -%}{%- endblock form_help -%}
+
+{%- block form_errors -%}
+    {%- for error in errors -%}<p class="fr-error-text">{{ error.message }}</p>{%- endfor -%}
+{%- endblock form_errors -%}
+
+{%- block form_widget_simple -%}
+    {%- set attr = attr|merge({class: ('fr-input' ~ (errors|length > 0 ? ' fr-input--error') ~ ' ' ~ attr.class|default(''))|trim}) -%}
+    {{- parent() -}}
+{%- endblock form_widget_simple -%}
+
+{%- block textarea_widget -%}
+    {%- set attr = attr|merge({class: ('fr-input' ~ (errors|length > 0 ? ' fr-input--error') ~ ' ' ~ attr.class|default(''))|trim}) -%}
+    {{- parent() -}}
+{%- endblock textarea_widget -%}
+
+{%- block file_row -%}
+    <div class="fr-upload-group{{ errors|length > 0 ? ' fr-upload-group--error' }}">
+        {{- form_label(form) -}}
+        <input type="file" class="fr-upload" {{ block('widget_attributes') }}{% if help is not empty %} aria-describedby="{{ id }}_help"{% endif %}/>
+        {{- form_errors(form) -}}
+    </div>
+{%- endblock file_row -%}
+
+{%- block checkbox_row -%}
+    <div class="fr-toggle{{ errors|length > 0 ? ' fr-toggle--error' }}">
+        <input type="checkbox" class="fr-toggle__input" {{ block('widget_attributes') }}{% if value is defined %} value="{{ value }}"{% endif %}{% if checked %} checked="checked"{% endif %}{% if help is not empty %} aria-describedby="{{ id }}_help"{% endif %}>
+        <label class="fr-toggle__label" for="{{ id }}" data-fr-checked-label="Activé" data-fr-unchecked-label="Désactivé">{{ label }}</label>
+        {%- if help is not empty %}<p class="fr-hint-text" id="{{ id }}_help">{{ help }}</p>{% endif -%}
+        {{- form_errors(form) -}}
+    </div>
+{%- endblock checkbox_row -%}
+
+{# Choix multiple en cases à cocher DSFR (formats, composants) : groupe de champs avec légende. #}
+{%- block choice_row -%}
+    {%- if expanded -%}
+        <fieldset class="fr-fieldset{{ errors|length > 0 ? ' fr-fieldset--error' }}" id="{{ id }}" aria-labelledby="{{ id }}-legend{{ errors|length > 0 ? ' ' ~ id ~ '-messages' }}">
+            <legend class="fr-fieldset__legend" id="{{ id }}-legend">{{ label }}
+                {%- if help is not empty %}<span class="fr-hint-text">{{ help }}</span>{% endif -%}
+            </legend>
+            {%- for child in form %}
+                <div class="fr-fieldset__element{{ attr.inline|default(false) ? ' fr-fieldset__element--inline' }}">
+                    <div class="fr-checkbox-group">
+                        <input type="checkbox" id="{{ child.vars.id }}" name="{{ child.vars.full_name }}" value="{{ child.vars.value }}"{% if child.vars.checked %} checked{% endif %}
+                            {%- if child.vars.attr['data-description'] is defined %} aria-describedby="{{ child.vars.id }}-hint"{% endif %}>
+                        <label class="fr-label" for="{{ child.vars.id }}">{{ child.vars.label }}
+                            {%- if child.vars.attr['data-description'] is defined %}<span class="fr-hint-text" id="{{ child.vars.id }}-hint">{{ child.vars.attr['data-description'] }}</span>{% endif -%}
+                        </label>
+                    </div>
+                </div>
+            {%- endfor %}
+            <div class="fr-messages-group" id="{{ id }}-messages" aria-live="polite">{{ form_errors(form) }}</div>
+        </fieldset>
+    {%- else -%}
+        {{- block('form_row') -}}
+    {%- endif -%}
+{%- endblock choice_row -%}
+
+{%- block choice_widget_collapsed -%}
+    {%- set attr = attr|merge({class: ('fr-select ' ~ attr.class|default(''))|trim}) -%}
+    {{- parent() -}}
+{%- endblock choice_widget_collapsed -%}

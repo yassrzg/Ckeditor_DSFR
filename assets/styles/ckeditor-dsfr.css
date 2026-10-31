@@ -1,0 +1,419 @@
+/*
+ * Bundle CKEditor DSFR : éditeur (cadre des composants, fenêtre de réglages, étape « Médiathèque »), pages de la
+ * médiathèque et compléments d'affichage des composants (le rendu public n'utilise sinon que les classes du DSFR).
+ * À charger après le DSFR : {{ ckeditor_dsfr_stylesheets() }}.
+ */
+
+/* Éditeur : hauteur de la zone de saisie, cadre des composants, fenêtre d'insertion. */
+.ckeditor-dsfr .ck-editor__editable_inline {
+    min-height: 26rem;
+    max-height: 75vh;
+    padding: 0 1.5rem;
+}
+
+.ckeditor-dsfr--error .ck.ck-editor__main > .ck-editor__editable {
+    border-color: var(--border-plain-error);
+}
+
+.cmp {
+    margin: 1.5rem 0;
+    padding: .75rem 1rem;
+    border: 1px dashed var(--border-action-high-blue-france);
+    border-radius: .25rem;
+    background: var(--background-alt-blue-france);
+}
+
+.cmp__label {
+    margin: 0 0 .5rem;
+    font-size: .875rem;
+    font-weight: 700;
+    color: var(--text-action-high-blue-france);
+}
+
+.ckeditor-dsfr .cmp__details {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: .875rem;
+}
+
+.ckeditor-dsfr .cmp__details li {
+    margin: 0;
+    padding: 0;
+}
+
+.cmp__field {
+    color: var(--text-mention-grey);
+}
+
+.cmp__thumb {
+    display: block;
+    width: 100%;
+    max-width: 12rem;
+    margin-bottom: .5rem;
+    object-fit: cover;
+}
+
+.cmp__slot {
+    position: relative;
+    min-height: 2.5rem;
+    margin-top: 1.75rem;
+    padding: .5rem .75rem;
+    border: 1px solid var(--border-default-grey);
+    background: var(--background-default-grey);
+}
+
+.cmp__slot::before {
+    content: attr(data-label);
+    position: absolute;
+    top: -1.5rem;
+    left: 0;
+    font-size: .75rem;
+    color: var(--text-mention-grey);
+}
+
+.cmp__slot--inline {
+    font-weight: 700;
+}
+
+.cmp-chooser {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    gap: .5rem;
+}
+
+/* Fenêtre des composants : hidden l'emporte sur l'affichage des classes DSFR (fr-fieldset est en flex). */
+.ckeditor-dsfr [hidden] {
+    display: none;
+}
+
+.cmp-chooser__item {
+    display: flex;
+    gap: .75rem;
+    width: 100%;
+    height: 100%;
+    padding: .75rem;
+    border: 1px solid var(--border-default-grey);
+    background: var(--background-default-grey);
+    text-align: left;
+}
+
+.cmp-chooser__item:hover {
+    background: var(--background-default-grey-hover);
+}
+
+.cmp-chooser__item > [class*="fr-icon-"] {
+    color: var(--text-action-high-blue-france);
+}
+
+/* Images des contenus et de la médiathèque : recadrées au format choisi (ratio DSFR), sans déformation. */
+.cmp-img {
+    object-fit: cover;
+}
+
+/* Pages de la médiathèque */
+.cmp-admin-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+    justify-content: space-between;
+}
+
+.cmp-media-card__file {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 16 / 9;
+    background: var(--background-alt-blue-france);
+    color: var(--text-action-high-blue-france);
+    font-weight: 700;
+}
+
+.cmp-media-preview {
+    max-height: 20rem;
+    object-fit: contain;
+    border: 1px solid var(--border-default-grey);
+}
+
+/* Sommaire repliable d'un contenu (composant Sommaire du DSFR, titre en bouton) */
+.cmp-summary__toggle {
+    display: inline-flex;
+    gap: .5rem;
+    align-items: center;
+    padding: 0;
+    background: none;
+    font: inherit;
+    font-weight: 700;
+    color: inherit;
+}
+
+.cmp-summary__icon {
+    transition: transform .2s;
+}
+
+.cmp-summary__toggle[aria-expanded="true"] .cmp-summary__icon {
+    transform: rotate(180deg);
+}
+
+.cmp-summary .fr-collapse > ol {
+    margin-top: .75rem;
+}
+
+/* Fenêtre des composants : médias choisis (ordre, retrait) et étape « Médiathèque ». */
+.cmp-media__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.cmp-media__item {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-default-grey);
+    background: var(--background-default-grey);
+}
+
+.cmp-media__handle {
+    cursor: grab;
+    color: var(--text-mention-grey);
+}
+
+.cmp-media__thumb {
+    width: 4rem;
+    height: 3rem;
+    object-fit: cover;
+}
+
+.cmp-media__icon {
+    color: var(--text-action-high-blue-france);
+}
+
+.cmp-media__text {
+    flex: 1 1 12rem;
+}
+
+.cmp-media__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+/* Réglages propres à un média (« Personnaliser ») : sous la ligne du média ; masqués si l'affichage ne les utilise pas. */
+.cmp-media__settings {
+    flex: 1 1 100%;
+    padding: 0.75rem 0 0;
+    border-top: 1px solid var(--border-default-grey);
+}
+
+.cmp-media__choice {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.cmp-media--no-items .cmp-media__customize,
+.cmp-media--no-items .cmp-media__settings {
+    display: none;
+}
+
+.cmp-library__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.cmp-library__grid > li {
+    position: relative;
+}
+
+.cmp-library__input {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: var(--background-action-high-blue-france);
+}
+
+.cmp-library__item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    height: 100%;
+    padding: 2.5rem 0.75rem 0.75rem;
+    border: 1px solid var(--border-default-grey);
+    background: var(--background-default-grey);
+    cursor: pointer;
+}
+
+.cmp-library__item .cmp-media__thumb {
+    width: 100%;
+    height: 6rem;
+}
+
+.cmp-library__item .cmp-media__icon::before {
+    --icon-size: 3rem;
+}
+
+.cmp-library__input:checked + .cmp-library__item {
+    border: 2px solid var(--border-active-blue-france);
+    background: var(--background-alt-blue-france);
+}
+
+.cmp-library__input:focus-visible + .cmp-library__item {
+    outline: 2px solid #0a76f6;
+    outline-offset: 2px;
+}
+
+.cmp-library__title {
+    font-weight: 700;
+}
+
+/* Étape « Médiathèque » : ajout d'un fichier sans quitter l'éditeur. */
+.cmp-library__add {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--border-default-grey);
+    background: var(--background-alt-grey);
+}
+
+/* Composant Image : petite (un tiers), moyenne (moitié) ou grande (largeur du texte), centrée ; pleine largeur sur mobile. */
+.cmp-image {
+    margin-right: auto;
+    margin-left: auto;
+}
+
+@media (min-width: 48em) {
+    .cmp-image--sm {
+        max-width: 33.333%;
+    }
+
+    .cmp-image--md {
+        max-width: 50%;
+    }
+
+    /* Image et texte : image à droite sur grand écran (sur mobile, l'image reste au-dessus du texte). */
+    .cmp-media-text--right .cmp-media-text__media {
+        order: 2;
+    }
+}
+
+.cmp-media-text__text > :last-child,
+.cmp-columns__column > :last-child {
+    margin-bottom: 0;
+}
+
+/* Bloc « Colonnes » dans l'éditeur : colonnes côte à côte (largeurs de la disposition), l'une sous l'autre si l'éditeur est étroit. */
+.cmp__columns {
+    display: grid;
+    gap: 0 1rem;
+}
+
+.cmp__column {
+    min-width: 0;
+}
+
+@media (max-width: 47.99em) {
+    .cmp__columns {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Composant Tableau dans l'éditeur : tableau sur toute la largeur de sa zone. */
+.ckeditor-dsfr .cmp--table figure.table {
+    width: 100%;
+    margin: 0;
+}
+
+.ckeditor-dsfr .cmp--table figure.table > table {
+    width: 100%;
+}
+
+/* Composants Icône et Pictogramme : alignement. */
+.cmp-artwork--center {
+    text-align: center;
+}
+
+.cmp-artwork--right {
+    text-align: right;
+}
+
+/* Alerte de l'éditeur (colonne trop étroite) : en haut à droite de l'écran, au-dessus des fenêtres. */
+.cmp-notices {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 2000;
+    width: min(28rem, calc(100vw - 2rem));
+}
+
+.cmp-notices .fr-alert {
+    background-color: var(--background-default-grey);
+}
+
+/* Icônes et pictogrammes du DSFR dans l'étape « Médiathèque ». */
+.cmp-media__pictogram {
+    width: 3.5rem;
+    height: 3.5rem;
+}
+
+.cmp-library__item .cmp-media__pictogram {
+    width: 5rem;
+    height: 5rem;
+}
+
+.cmp-library__more {
+    grid-column: 1 / -1;
+}
+
+/* Carte avec pictogramme du DSFR en en-tête (à la place d'une image) : illustration centrée sur fond clair. */
+.cmp-card__pictogram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background-color: var(--background-alt-blue-france);
+}
+
+/* Pages de la médiathèque : titre et boutons d'ajout sur une ligne. */
+.cmp-admin-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.5rem;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+/*
+ * Fenêtre des composants : c'est la fenêtre entière qui défile, comme une page, et non la seule boîte blanche limitée
+ * à la hauteur de l'écran ; le bas (boutons) reste toujours atteignable, quels que soient le navigateur et le zoom.
+ */
+.ckeditor-dsfr .fr-modal {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.ckeditor-dsfr .fr-modal > .fr-container {
+    flex-shrink: 0;
+    overflow: visible;
+}
+
+.ckeditor-dsfr .fr-modal .fr-modal__body {
+    max-height: none;
+    overflow-y: visible;
+    /* Marge basse du contenu gardée dans la boîte blanche (étape « Médiathèque » : pied masqué). */
+    display: flow-root;
+}
+
+/* Titre ciblé par un lien du sommaire : pas collé au haut de l'écran. */
+:is(h2, h3)[id^="section-"] {
+    scroll-margin-top: 1.5rem;
+}

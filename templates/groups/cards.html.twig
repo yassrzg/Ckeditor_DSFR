@@ -1,0 +1,7 @@
+{# Cartes et tuiles consécutives : 1 à 4 colonnes selon leur nombre (2 au plus si l'une est horizontale), une seule sur mobile. #}
+{% import '@CkeditorDsfr/_macros.html.twig' as editor %}
+{% set horizontal = items|filter(i => (i.values.orientation ?? 'vertical') starts with 'horizontal')|length > 0 %}
+{% set col = editor.grid_col(items|length, horizontal) %}
+<ul class="fr-grid-row fr-grid-row--gutters fr-raw-list fr-mb-6v">
+    {% for item in items %}<li class="{{ col }}">{{ item.html|raw }}</li>{% endfor %}
+</ul>

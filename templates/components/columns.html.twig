@@ -1,0 +1,11 @@
+{#
+ # Bloc « Colonnes » : grille DSFR, une colonne par largeur de la disposition (total de 12). Chaque colonne prend toute
+ # la largeur (fr-col-12) sur téléphone et se place côte à côte à partir de la tablette (md) ou de l'ordinateur (lg),
+ # dans l'ordre du contenu (ordre de lecture identique sur tous les écrans).
+ #}
+{% set align = c.values.align ?? 'top' %}
+<div class="fr-grid-row fr-grid-row--gutters{{ align != 'top' ? ' fr-grid-row--' ~ align }} fr-mb-6v cmp-columns">
+    {% for column in c.columns %}
+        <div class="fr-col-12 fr-col-{{ c.values.breakpoint }}-{{ column.span }} cmp-columns__column">{{ column.html|raw }}</div>
+    {% endfor %}
+</div>

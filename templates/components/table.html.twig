@@ -1,0 +1,21 @@
+{#
+ # Tableau DSFR : titre obligatoire (caption, RGAA) affiché au-dessus, en dessous ou réservé aux lecteurs d'écran ; taille,
+ # bordures, largeur des colonnes et couleur. Le tableau est rédigé dans l'éditeur (lignes, colonnes, en-têtes).
+ #}
+{% set v = c.values %}
+{% set classes = 'fr-table'
+    ~ (v.size != 'md' ? ' fr-table--' ~ v.size)
+    ~ (v.bordered == 'yes' ? ' fr-table--bordered')
+    ~ (v.layout == 'fixed' ? ' fr-table--layout-fixed')
+    ~ (v.color != 'default' ? ' fr-table--' ~ v.color)
+    ~ (v['caption-display'] == 'bottom' ? ' fr-table--caption-bottom')
+    ~ (v['caption-display'] == 'hidden' ? ' fr-table--no-caption') %}
+<div class="{{ classes }} fr-mb-6v">
+    <div class="fr-table__wrapper">
+        <div class="fr-table__container">
+            <div class="fr-table__content">
+                {{ c.slots.body|replace({'<table>': '<table><caption>' ~ v.caption|e ~ '</caption>'})|raw }}
+            </div>
+        </div>
+    </div>
+</div>

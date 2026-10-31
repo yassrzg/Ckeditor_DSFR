@@ -1,0 +1,3 @@
+{# Bouton lien (groupe si plusieurs à la suite) : style, taille ; icône du DSFR facultative, à gauche ou à droite du libellé (toujours affiché). #}
+{% import '@CkeditorDsfr/_macros.html.twig' as editor %}
+<a class="{{ editor.button_classes(c.values) }}" href="{{ c.values.url }}">{{ c.values.label }}</a>
