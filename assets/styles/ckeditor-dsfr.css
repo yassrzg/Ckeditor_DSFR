@@ -417,3 +417,83 @@
 :is(h2, h3)[id^="section-"] {
     scroll-margin-top: 1.5rem;
 }
+
+/* Fenêtre des composants : réglage à une seule valeur possible (ex. une seule source de vidéo autorisée), masqué. */
+.cmp-field--single {
+    display: none;
+}
+
+/* Page des réglages : résumé, sections encadrées, composants sur deux colonnes, boutons toujours visibles. */
+.cmp-settings__summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 0.75rem;
+}
+
+.cmp-settings__summary li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem;
+    background-color: var(--background-alt-blue-france);
+    font-size: 0.875rem;
+}
+
+.cmp-settings__summary .fr-link {
+    font-weight: 700;
+}
+
+.cmp-settings__section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border: 1px solid var(--border-default-grey);
+    scroll-margin-top: 1.5rem;
+}
+
+.cmp-settings__title {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    scroll-margin-top: 1.5rem;
+}
+
+.cmp-settings__group {
+    margin-bottom: 1rem;
+}
+
+.cmp-settings__choices {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    gap: 1rem 1.5rem;
+    width: 100%;
+    padding: 0 0.75rem;
+}
+
+.cmp-settings__part {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-default-grey);
+}
+
+/* Réglages d'une source de vidéo non cochée : masqués (toujours envoyés, valeurs conservées). */
+.cmp-settings:has(input[name$="[video_sources][]"][value="link"]:not(:checked)) .cmp-settings__part--link,
+.cmp-settings:has(input[name$="[video_sources][]"][value="upload"]:not(:checked)) .cmp-settings__part--upload {
+    display: none;
+}
+
+.cmp-settings__pair {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 0 1.5rem;
+    /* Aides de longueurs différentes : champs alignés en bas. */
+    align-items: end;
+}
+
+.cmp-settings__actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-default-grey);
+    background-color: var(--background-default-grey);
+}

@@ -7,9 +7,11 @@ namespace Yassrzg\CkeditorDsfrBundle;
 use Yassrzg\CkeditorDsfrBundle\Doctrine\BundleSchema;
 use Yassrzg\CkeditorDsfrBundle\Editor\ComponentCatalog;
 use Yassrzg\CkeditorDsfrBundle\Editor\ComponentProviderInterface;
+use Yassrzg\CkeditorDsfrBundle\Enum\MediaType;
 use Yassrzg\CkeditorDsfrBundle\Media\MediaDirectories;
 use Yassrzg\CkeditorDsfrBundle\Media\MediaExtensions;
 use Yassrzg\CkeditorDsfrBundle\Media\MediaUsageProviderInterface;
+use Yassrzg\CkeditorDsfrBundle\Settings\EditorSettings;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\Config\Resource\FileResource;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -54,7 +56,7 @@ final class CkeditorDsfrBundle extends AbstractBundle
                     ->defaultValue([])
                 ->end()
                 ->scalarNode('storage_root')
-                    ->info('Dossier racine des fichiers de la médiathèque : l\'administrateur choisit les sous-dossiers des images et des documents.')
+                    ->info('Dossier racine des fichiers de la médiathèque : l\'administrateur choisit les sous-dossiers des images, des documents et des vidéos.')
                     ->defaultValue('%kernel.project_dir%/var/ckeditor_dsfr')
                 ->end()
                 ->arrayNode('tables')
@@ -82,6 +84,7 @@ final class CkeditorDsfrBundle extends AbstractBundle
                     ->children()
                         ->arrayNode('image')->scalarPrototype()->end()->defaultValue(MediaExtensions::IMAGE_CATALOG)->end()
                         ->arrayNode('document')->scalarPrototype()->end()->defaultValue(MediaExtensions::DOCUMENT_CATALOG)->end()
+                        ->arrayNode('video')->scalarPrototype()->end()->defaultValue(MediaExtensions::VIDEO_CATALOG)->end()
                     ->end()
                 ->end()
                 ->integerNode('max_size_limit')
@@ -92,6 +95,11 @@ final class CkeditorDsfrBundle extends AbstractBundle
                     ->info('Réglages appliqués tant que l\'administrateur ne les a pas modifiés.')
                     ->addDefaultsIfNotSet()
                     ->children()
+                        ->arrayNode('video_sources')
+                            ->info('Vidéos proposées au rédacteur : link (lien vers une plateforme autorisée), upload (fichier de la médiathèque).')
+                            ->enumPrototype()->values(EditorSettings::VIDEO_SOURCE_CHOICES)->end()
+                            ->defaultValue([EditorSettings::VIDEO_LINK])
+                        ->end()
                         ->arrayNode('video_hosts')->scalarPrototype()->end()->defaultValue([])->end()
                         ->arrayNode('image_extensions')->scalarPrototype()->end()->defaultValue(['jpg', 'jpeg', 'png', 'webp'])->end()
                         ->arrayNode('document_extensions')->scalarPrototype()->end()
@@ -99,9 +107,12 @@ final class CkeditorDsfrBundle extends AbstractBundle
                         ->end()
                         ->integerNode('image_max_size')->defaultValue(10)->min(1)->end()
                         ->integerNode('document_max_size')->defaultValue(50)->min(1)->end()
+                        ->arrayNode('video_extensions')->scalarPrototype()->end()->defaultValue(['mp4', 'webm'])->end()
+                        ->integerNode('video_max_size')->defaultValue(200)->min(1)->end()
                         ->arrayNode('disabled_components')->scalarPrototype()->end()->defaultValue([])->end()
                         ->scalarNode('image_directory')->info('Sous-dossier de storage_root.')->defaultValue('image')->end()
                         ->scalarNode('document_directory')->info('Sous-dossier de storage_root.')->defaultValue('document')->end()
+                        ->scalarNode('video_directory')->info('Sous-dossier de storage_root.')->defaultValue('video')->end()
                     ->end()
                 ->end()
                 ->arrayNode('media_usages')
@@ -128,15 +139,29 @@ final class CkeditorDsfrBundle extends AbstractBundle
                 ->end()
             ->end()
             ->validate()
-                ->ifTrue(static fn (array $c): bool => null === MediaDirectories::normalize($c['defaults']['image_directory']) || null === MediaDirectories::normalize($c['defaults']['document_directory']))
-                ->thenInvalid('ckeditor_dsfr.defaults : sous-dossier non valide (lettres, chiffres, - et _, séparés par /).')
+                ->ifTrue(static fn (array $c): bool => \in_array(null, $directories = self::directories($c), true) || \count($directories) !== \count(array_unique($directories)))
+                ->thenInvalid('ckeditor_dsfr.defaults : sous-dossiers des images, documents et vidéos non valides (lettres, chiffres, - et _, séparés par /) ou identiques.')
             ->end()
             ->validate()
-                ->ifTrue(static fn (array $c): bool => [] !== MediaExtensions::forbidden([...$c['extension_catalog']['image'], ...$c['extension_catalog']['document']]))
+                ->ifTrue(static fn (array $c): bool => [] !== MediaExtensions::forbidden(array_merge(...array_values($c['extension_catalog']))))
                 ->then(static function (array $c): never {
-                    throw new \InvalidArgumentException('ckeditor_dsfr.extension_catalog : formats refusés : '.implode(', ', MediaExtensions::forbidden([...$c['extension_catalog']['image'], ...$c['extension_catalog']['document']])).'.');
+                    throw new \InvalidArgumentException('ckeditor_dsfr.extension_catalog : formats refusés : '.implode(', ', MediaExtensions::forbidden(array_merge(...array_values($c['extension_catalog'])))).'.');
                 })
             ->end();
+    }
+
+    /**
+     * Sous-dossiers par défaut des catégories de médias, normalisés (null : non valide).
+     *
+     * @param array<mixed> $config configuration traitée (clé defaults)
+     *
+     * @return list<?string>
+     */
+    private static function directories(array $config): array
+    {
+        $defaults = (array) ($config['defaults'] ?? []);
+
+        return array_map(static fn (MediaType $type): ?string => MediaDirectories::normalize(\is_string($defaults[$type->value.'_directory'] ?? null) ? $defaults[$type->value.'_directory'] : null), MediaType::cases());
     }
 
     /**

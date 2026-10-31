@@ -15,7 +15,17 @@ Le DSFR doit être présent dans les fichiers du projet (icônes et pictogrammes
 
 ## 2. Installer le paquet
 
-Tant que le bundle n'a pas de dépôt Git, il s'installe depuis un dossier (dépôt Composer « path »). Copier le dossier du
+Depuis le dépôt GitHub (paquet non publié sur Packagist) :
+
+```bash
+composer config repositories.ckeditor-dsfr-bundle git https://github.com/yassrzg/Ckeditor_DSFR.git
+composer require "yassrzg/ckeditor-dsfr-bundle:dev-main"
+```
+
+> Type `git` et adresse HTTPS : avec le type `vcs`, Composer peut tenter un clonage SSH (`git@github.com:…`) qui échoue
+> sans clé SSH GitHub.
+
+Depuis un dossier (dépôt Composer « path »), par exemple pour modifier le bundle dans le projet : copier le dossier du
 bundle dans le projet (ex. `packages/ckeditor-dsfr-bundle`), puis dans `composer.json` :
 
 ```json
@@ -163,6 +173,7 @@ l'éditeur, « Insérer un composant ». Avec le rôle `settings` : `/admin/regl
 | Reste sur « Chargement de l’éditeur… » | JavaScript bloqué : erreur CSP `data:application/javascript` dans la console (voir l'étape 7), ou contrôleur absent de `assets/controllers.json` (relancer `ckeditor-dsfr:install`) |
 | Icônes et pictogrammes absents | `ckeditor_dsfr.dsfr.directory` ne pointe pas vers les fichiers du DSFR |
 | Pictogrammes sans image | `ckeditor_dsfr.dsfr.asset_prefix` ne correspond pas au chemin public du DSFR |
+| Deux balises `<main>` imbriquées sur les pages de la médiathèque | le gabarit du projet entoure déjà le bloc `body` d'un `<main>` : surcharger `templates/bundles/CkeditorDsfrBundle/admin/_layout.html.twig` (voir [utilisation.md](utilisation.md#mise-en-page-de-ladministration)) |
 | Pages de la médiathèque sans menu | surcharger `templates/bundles/CkeditorDsfrBundle/admin/_layout.html.twig` (voir [utilisation.md](utilisation.md#mise-en-page-de-ladministration)) |
 | Vidéos bloquées par le navigateur | ajouter les hôtes à `frame-src` (option `content_security_policy: true` ou politique du projet) |
 | Fichier refusé « Format non accepté » | format non coché dans les réglages, ou contenu du fichier différent de son extension |

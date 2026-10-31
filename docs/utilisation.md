@@ -90,7 +90,8 @@ Déclarer alors la relation dans `media_usages` (`relation_fields`) pour bloquer
 ## Mise en page de l'administration
 
 Les pages du bundle étendent `@CkeditorDsfr/admin/_layout.html.twig`, qui étend `ckeditor_dsfr.layout` et remplit son
-bloc `body`. Pour les intégrer à l'administration du projet (menu, fil d'Ariane), surcharger ce gabarit :
+bloc `body` dans un `<main id="contenu">`. Pour les intégrer à l'administration du projet (menu, fil d'Ariane), ou si
+le gabarit du projet a déjà son propre `<main>` autour du bloc `body`, surcharger ce gabarit :
 
 ```twig
 {# templates/bundles/CkeditorDsfrBundle/admin/_layout.html.twig #}

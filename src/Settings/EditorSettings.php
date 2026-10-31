@@ -12,22 +12,23 @@ use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
- * Réglages de l'éditeur modifiables par l'administrateur (page « Réglages de l'éditeur ») : hôtes des lecteurs vidéo,
- * formats, poids maximal et dossiers de stockage des images et des documents, composants désactivés. Un réglage jamais enregistré prend la
- * valeur de ckeditor_dsfr.defaults.
+ * Réglages de l'éditeur modifiables par l'administrateur (page « Réglages de l'éditeur ») : sources des vidéos (lien,
+ * fichier), hôtes des lecteurs vidéo, formats, poids maximal et dossiers de stockage de chaque catégorie de médias
+ * (images, documents, vidéos), composants désactivés. Un réglage jamais enregistré prend la valeur de ckeditor_dsfr.defaults.
  *
  * Lus en une requête, une fois par requête HTTP ; base indisponible : valeurs par défaut sans vidéo (la page s'affiche).
  */
 final class EditorSettings implements ResetInterface
 {
     public const string VIDEO_HOSTS = 'video_hosts';
-    public const string IMAGE_EXTENSIONS = 'media_image_extensions';
-    public const string DOCUMENT_EXTENSIONS = 'media_document_extensions';
-    public const string IMAGE_MAX_SIZE = 'media_image_max_size';
-    public const string DOCUMENT_MAX_SIZE = 'media_document_max_size';
+    public const string VIDEO_SOURCES = 'video_sources';
     public const string DISABLED_COMPONENTS = 'disabled_components';
-    public const string IMAGE_DIRECTORY = 'media_image_directory';
-    public const string DOCUMENT_DIRECTORY = 'media_document_directory';
+
+    /** Vidéo par lien vers une plateforme autorisée (lecteur intégré). */
+    public const string VIDEO_LINK = 'link';
+    /** Vidéo envoyée dans la médiathèque (lecteur du navigateur). */
+    public const string VIDEO_UPLOAD = 'upload';
+    public const array VIDEO_SOURCE_CHOICES = [self::VIDEO_LINK, self::VIDEO_UPLOAD];
 
     private const string HOST_PATTERN = '/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/';
 
@@ -36,8 +37,8 @@ final class EditorSettings implements ResetInterface
     private bool $unavailable = false;
 
     /**
-     * @param array{video_hosts: list<string>, image_extensions: list<string>, document_extensions: list<string>, image_max_size: int, document_max_size: int, disabled_components: list<string>, image_directory: string, document_directory: string} $defaults
-     * @param array{image: list<string>, document: list<string>} $catalog
+     * @param array<string, mixed>        $defaults ckeditor_dsfr.defaults (video_sources, video_hosts, disabled_components et, par catégorie : <type>_extensions, <type>_max_size, <type>_directory)
+     * @param array<string, list<string>> $catalog  extensions que l'administrateur peut autoriser, par catégorie
      */
     public function __construct(
         private readonly SettingRepository $repository,
@@ -62,11 +63,32 @@ final class EditorSettings implements ResetInterface
     }
 
     /**
+     * @return list<string> sources de vidéo proposées au rédacteur (VIDEO_LINK, VIDEO_UPLOAD), dans cet ordre
+     */
+    public function videoSources(): array
+    {
+        $stored = $this->stored(self::VIDEO_SOURCES);
+        $sources = null === $stored ? $this->defaults['video_sources'] : explode(',', $stored);
+
+        return array_values(array_intersect(self::VIDEO_SOURCE_CHOICES, $sources));
+    }
+
+    /**
+     * Sources réellement utilisables : un lien n'est proposé qu'avec au moins une plateforme autorisée.
+     *
+     * @return list<string>
+     */
+    public function offeredVideoSources(): array
+    {
+        return array_values(array_filter($this->videoSources(), fn (string $source): bool => self::VIDEO_LINK !== $source || [] !== $this->videoHosts()));
+    }
+
+    /**
      * @return list<string> extensions autorisées (toujours comprises dans le catalogue)
      */
     public function extensions(MediaType $type): array
     {
-        $stored = $this->stored(MediaType::IMAGE === $type ? self::IMAGE_EXTENSIONS : self::DOCUMENT_EXTENSIONS);
+        $stored = $this->stored(self::key($type, 'extensions'));
         $extensions = MediaExtensions::normalize(null === $stored ? $this->defaults[$type->value.'_extensions'] : explode(',', $stored));
 
         return array_values(array_intersect($extensions, $this->catalog($type)));
@@ -83,7 +105,7 @@ final class EditorSettings implements ResetInterface
     /** Poids maximal d'un fichier, en Mo. */
     public function maxSize(MediaType $type): int
     {
-        $stored = $this->stored(MediaType::IMAGE === $type ? self::IMAGE_MAX_SIZE : self::DOCUMENT_MAX_SIZE);
+        $stored = $this->stored(self::key($type, 'max_size'));
         $size = null !== $stored && ctype_digit($stored) ? (int) $stored : $this->defaults[$type->value.'_max_size'];
 
         return max(1, min($size, $this->maxSizeLimit));
@@ -107,7 +129,7 @@ final class EditorSettings implements ResetInterface
     /** Sous-dossier de ckeditor_dsfr.storage_root où sont stockés les fichiers de cette catégorie. */
     public function directory(MediaType $type): string
     {
-        $stored = $this->stored(MediaType::IMAGE === $type ? self::IMAGE_DIRECTORY : self::DOCUMENT_DIRECTORY);
+        $stored = $this->stored(self::key($type, 'directory'));
 
         return MediaDirectories::normalize($stored) ?? (string) MediaDirectories::normalize($this->defaults[$type->value.'_directory']);
     }
@@ -115,21 +137,28 @@ final class EditorSettings implements ResetInterface
     /**
      * Enregistre les réglages (valeurs déjà validées par SettingsFormType ; dossiers déjà déplacés par MediaRelocator).
      *
-     * @param array{video_hosts: list<string>, image_extensions: list<string>, document_extensions: list<string>, image_max_size: int, document_max_size: int, disabled_components: list<string>, image_directory: string, document_directory: string} $values
+     * @param array<string, mixed> $values video_sources, video_hosts, disabled_components (listes) et, par catégorie : <type>_extensions (liste), <type>_max_size (entier), <type>_directory
      */
     public function save(array $values): void
     {
-        $this->repository->saveAll([
-            self::IMAGE_DIRECTORY => $values['image_directory'],
-            self::DOCUMENT_DIRECTORY => $values['document_directory'],
+        $settings = [
+            self::VIDEO_SOURCES => implode(',', $values['video_sources']),
             self::VIDEO_HOSTS => implode("\n", $values['video_hosts']),
-            self::IMAGE_EXTENSIONS => implode(',', $values['image_extensions']),
-            self::DOCUMENT_EXTENSIONS => implode(',', $values['document_extensions']),
-            self::IMAGE_MAX_SIZE => (string) $values['image_max_size'],
-            self::DOCUMENT_MAX_SIZE => (string) $values['document_max_size'],
             self::DISABLED_COMPONENTS => implode(',', $values['disabled_components']),
-        ]);
+        ];
+        foreach (MediaType::cases() as $type) {
+            $settings[self::key($type, 'directory')] = $values[$type->value.'_directory'];
+            $settings[self::key($type, 'extensions')] = implode(',', $values[$type->value.'_extensions']);
+            $settings[self::key($type, 'max_size')] = (string) $values[$type->value.'_max_size'];
+        }
+        $this->repository->saveAll($settings);
         $this->reset();
+    }
+
+    /** Nom enregistré d'un réglage de catégorie (ex. media_image_extensions, media_video_directory). */
+    public static function key(MediaType $type, string $setting): string
+    {
+        return 'media_'.$type->value.'_'.$setting;
     }
 
     /**
@@ -162,10 +191,11 @@ final class EditorSettings implements ResetInterface
     {
         if (null === $this->stored) {
             try {
-                $this->stored = $this->repository->values([
-                    self::VIDEO_HOSTS, self::IMAGE_EXTENSIONS, self::DOCUMENT_EXTENSIONS, self::IMAGE_MAX_SIZE, self::DOCUMENT_MAX_SIZE,
-                    self::DISABLED_COMPONENTS, self::IMAGE_DIRECTORY, self::DOCUMENT_DIRECTORY,
-                ]);
+                $names = [self::VIDEO_SOURCES, self::VIDEO_HOSTS, self::DISABLED_COMPONENTS];
+                foreach (MediaType::cases() as $type) {
+                    array_push($names, self::key($type, 'extensions'), self::key($type, 'max_size'), self::key($type, 'directory'));
+                }
+                $this->stored = $this->repository->values($names);
             } catch (\Throwable $e) {
                 $this->logger->error('Réglages de l\'éditeur illisibles : valeurs par défaut, vidéos désactivées.', ['exception' => $e]);
                 $this->stored = [];

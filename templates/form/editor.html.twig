@@ -69,12 +69,13 @@
                                                         {%- set texts = {
                                                             image: ['Aucune image sélectionnée.', 'Sélectionner une image'],
                                                             document: multiple ? ['Aucun document sélectionné.', 'Sélectionner des documents'] : ['Aucun document sélectionné.', 'Sélectionner un document'],
+                                                            video: ['Aucune vidéo sélectionnée.', 'Sélectionner une vidéo'],
                                                             icon: ['Aucune icône.', 'Choisir une icône du DSFR'],
                                                             pictogram: ['Aucun pictogramme.', 'Choisir un pictogramme du DSFR'],
                                                         }[kind] -%}
                                                         <input type="hidden" id="{{ field_id }}" data-field="{{ field.attribute }}">
                                                         {%- if field.items is not empty %}<input type="hidden" data-settings-field="{{ field.settingsAttribute }}">{% endif %}
-                                                        <div class="cmp-media" data-media-field data-media-type="{{ kind }}" data-multiple="{{ multiple ? 1 : 0 }}">
+                                                        <div class="cmp-media" data-media-field data-media-type="{{ kind }}" data-multiple="{{ multiple ? 1 : 0 }}" data-formats="{{ field.formats|join(',') }}">
                                                             <ul class="cmp-media__list fr-raw-list" data-media-list aria-labelledby="{{ field_id }}-label"></ul>
                                                             <p class="fr-hint-text" data-media-empty>{{ texts[0] }}</p>
                                                             <button type="button" class="fr-btn fr-btn--secondary fr-btn--sm fr-btn--icon-left {{ kind in ['icon', 'pictogram'] ? 'fr-icon-palette-line' : 'fr-icon-folder-2-line' }}" aria-describedby="{{ field_id }}-label"

@@ -13,8 +13,8 @@ use Symfony\Contracts\Service\ResetInterface;
  * (ContentSanitizer, ContentValidator) et le rendu DSFR à l'affichage (ContentRenderer, gabarits @CkeditorDsfr/components/).
  * Composant propre à un projet : fichier YAML (option component_files) ou ComponentProviderInterface, et gabarit
  * templates/bundles/CkeditorDsfrBundle/components/<nom>.html.twig.
- * L'administrateur peut retirer des composants de l'éditeur (EditorSettings) ; « Vidéo » n'est proposé que si au
- * moins un hôte est autorisé. Un composant retiré ou ancien (legacy) déjà présent dans un contenu reste affiché et
+ * L'administrateur peut retirer des composants de l'éditeur (EditorSettings) ; « Vidéo » n'est proposé que si une
+ * source est utilisable (lien avec au moins un hôte autorisé, ou fichier). Un composant retiré ou ancien (legacy) déjà présent dans un contenu reste affiché et
  * modifiable : l'éditeur reçoit tous les composants, seuls les composants proposés sont « insertable ».
  */
 final class ComponentRegistry implements ResetInterface
@@ -41,25 +41,24 @@ final class ComponentRegistry implements ResetInterface
         return $this->settings->videoHosts();
     }
 
-    /** Composant affichable (vidéo : au moins un hôte autorisé), même retiré de l'éditeur par l'administrateur. */
+    /**
+     * Composant affichable, même retiré de l'éditeur par l'administrateur (une vidéo par lien n'est affichée que si
+     * son hôte est autorisé : ContentRenderer).
+     */
     public function get(string $name): ?ComponentDefinition
     {
-        if ('video' === $name && [] === $this->videoHosts()) {
-            return null;
-        }
-
         return $this->definitions()[$name] ?? null;
     }
 
     /**
-     * Composants proposés à l'insertion : ni anciens, ni retirés par l'administrateur, ni vidéo sans hôte autorisé.
+     * Composants proposés à l'insertion : ni anciens, ni retirés par l'administrateur, ni vidéo sans source utilisable.
      *
      * @return array<string, ComponentDefinition>
      */
     public function all(): array
     {
         $definitions = array_diff_key($this->selectable(), array_flip($this->settings->disabledComponents()));
-        if ([] === $this->videoHosts()) {
+        if ([] === $this->settings->offeredVideoSources()) {
             unset($definitions['video']);
         }
 
@@ -152,17 +151,30 @@ final class ComponentRegistry implements ResetInterface
     }
 
     /**
-     * Description de tous les composants pour l'éditeur : un composant non proposé (retiré, ancien, vidéo sans hôte)
-     * reste lu et réenregistré tel quel, il n'est simplement plus insérable.
+     * Description de tous les composants pour l'éditeur : un composant non proposé (retiré, ancien, vidéo sans source)
+     * reste lu et réenregistré tel quel, il n'est simplement plus insérable. Vidéo : le réglage « source » ne propose
+     * que les sources autorisées (offered) ; une vidéo existante garde la sienne.
      *
      * @return list<array<string, mixed>>
      */
     public function forEditor(): array
     {
         $insertable = $this->all();
+        $sources = $this->settings->offeredVideoSources();
 
         return array_values(array_map(
-            static fn (ComponentDefinition $d): array => [...$d->toArray(), 'insertable' => isset($insertable[$d->name])],
+            static function (ComponentDefinition $d) use ($insertable, $sources): array {
+                $component = [...$d->toArray(), 'insertable' => isset($insertable[$d->name])];
+                if ('video' === $d->name) {
+                    foreach ($component['fields'] as $i => $field) {
+                        if ('source' === $field['name']) {
+                            $component['fields'][$i]['offered'] = $sources;
+                        }
+                    }
+                }
+
+                return $component;
+            },
             $this->definitions(),
         ));
     }

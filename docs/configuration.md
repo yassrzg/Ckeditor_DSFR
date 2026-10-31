@@ -37,13 +37,18 @@ ckeditor_dsfr:
     # Formats que l'administrateur peut cocher (il choisit parmi ces listes).
     extension_catalog:
         image: [jpg, jpeg, png, webp, gif, avif]
-        document: [pdf, odt, ods, odp, odg, doc, docx, xls, xlsx, ppt, pptx, csv, txt, rtf, zip, 7z, gz, tar, json, epub, mp3, mp4, webm]
+        document: [pdf, odt, ods, odp, odg, doc, docx, xls, xlsx, ppt, pptx, csv, txt, rtf, zip, 7z, gz, tar, json, epub, mp3, mp4, webm, vtt]
+        video: [mp4, webm, ogv]                        # vidéos envoyées (composant « Vidéo », source fichier)
 
     max_size_limit: 200         # poids maximal (Mo) que l'administrateur peut fixer
 
     # Valeurs initiales des réglages de l'administrateur.
     defaults:
+        video_sources: [link]                            # vidéos proposées : link (lien vers une plateforme), upload (fichier) ou les 2
         video_hosts: []                                  # ex. [www.youtube.com, player.vimeo.com]
+        video_extensions: [mp4, webm]
+        video_max_size: 200                              # Mo
+        video_directory: video                           # sous storage_root
         image_extensions: [jpg, jpeg, png, webp]
         document_extensions: [pdf, odt, ods, odp, doc, docx, xls, xlsx, ppt, pptx, csv, txt, zip]
         image_max_size: 10                               # Mo
@@ -72,13 +77,18 @@ Page `ckeditor_dsfr_settings` (`/admin/reglages-editeur` avec le préfixe consei
 | Réglage | Effet |
 | --- | --- |
 | Composants proposés | Un composant décoché n'est plus proposé dans l'éditeur ; les contenus qui l'utilisent restent affichés et modifiables. « Colonnes » s'active ou se désactive ici comme les autres ; un ancien composant (« Image et texte ») n'y figure plus. |
-| Plateformes vidéo | Un hôte par ligne (une adresse complète est réduite à son hôte). Vide : composant « Vidéo » retiré et vidéos masquées (réglages conservés). |
-| Formats d'image, de document | Cases à cocher parmi `extension_catalog`. Le format est déduit du **contenu** du fichier. |
+| Vidéos proposées au rédacteur | Cases « Lien vers une plateforme vidéo » et « Fichier vidéo envoyé dans la médiathèque ». Une seule source : le rédacteur ne choisit pas. Aucune (ou lien seul sans plateforme) : composant « Vidéo » non proposé ; les vidéos déjà insérées restent affichées. |
+| Plateformes vidéo | Un hôte par ligne (une adresse complète est réduite à son hôte). Vide : aucune vidéo par lien proposée ni affichée (réglages conservés). |
+| Formats (images, documents, vidéos) | Cases à cocher parmi `extension_catalog`. Le format est déduit du **contenu** du fichier. Sous-titres des vidéos : format VTT des documents. |
 | Poids maximal | 1 à `max_size_limit` Mo. PHP doit aussi l'accepter (`upload_max_filesize`, `post_max_size`), la page affiche la limite de PHP. |
-| Dossier des images, des documents | Sous-dossier de `storage_root` (lettres, chiffres, `-`, `_`, séparés par `/`). Un changement **déplace les fichiers existants** ; au moindre échec, tout revient en place et le réglage n'est pas modifié. Les deux catégories doivent être dans des dossiers différents. |
+| Dossier des images, des documents, des vidéos | Sous-dossier de `storage_root` (lettres, chiffres, `-`, `_`, séparés par `/`). Un changement **déplace les fichiers existants** ; au moindre échec, tout revient en place et le réglage n'est pas modifié. Chaque catégorie a son propre dossier. |
 
 Les réglages sont lus en une requête par requête HTTP. Si la base est indisponible, les valeurs par défaut s'appliquent,
-vidéos désactivées (erreur journalisée).
+vidéos par lien désactivées (erreur journalisée).
+
+**Vidéos envoyées** : servies par `/media/{id}` (droits `roles.view`), par morceaux (en-tête `Range`), sous-titres en
+`text/vtt`. Le serveur doit accepter le poids choisi : PHP `upload_max_filesize` et `post_max_size`, et la limite du
+serveur web (Nginx `client_max_body_size`).
 
 ## Sécurité
 

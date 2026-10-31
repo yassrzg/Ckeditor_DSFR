@@ -345,12 +345,45 @@ final class RenderingTest extends FunctionalTestCase
         );
     }
 
+    public function testUploadedVideoIsPlayedWithSubtitlesAndPoster(): void
+    {
+        $video = $this->createMedia(MediaType::VIDEO, 'Démonstration', 'video.webm');
+        $subtitles = $this->createMedia(MediaType::DOCUMENT, 'Sous-titres', 'subtitles.vtt');
+        $poster = $this->createMedia(MediaType::IMAGE, 'Aperçu', 'image.png', 'Aperçu');
+        $pdf = $this->createMedia(MediaType::DOCUMENT, 'Guide', 'document.pdf');
+        self::assertSame('VTT', $subtitles->getFormat(), 'Sous-titres WebVTT reconnus.');
+
+        $page = new Crawler($this->render(
+            '<div data-component="video" data-source="upload" data-media-id="'.$video->getId().'" data-title="Démo"'
+            .' data-subtitles-media-id="'.$subtitles->getId().'" data-poster-media-id="'.$poster->getId().'" data-url="https://www.youtube.com/watch?v=x"></div>'
+            // Sous-titres d'un autre format : piste ignorée ; vidéo absente : composant non affiché.
+            .'<div data-component="video" data-source="upload" data-media-id="'.$video->getId().'" data-title="Sans piste" data-subtitles-media-id="'.$pdf->getId().'"></div>'
+            .'<div data-component="video" data-source="upload" data-media-id="'.$poster->getId().'" data-title="Pas une vidéo"></div>',
+        ));
+
+        $players = $page->filter('video.fr-responsive-vid');
+        self::assertCount(2, $players);
+        self::assertCount(0, $page->filter('iframe'), 'Source « fichier » : l\'adresse éventuelle est ignorée.');
+        self::assertSame('/media/'.$video->getId(), $players->first()->filter('source')->attr('src'));
+        self::assertSame('video/webm', $players->first()->filter('source')->attr('type'));
+        self::assertSame('/media/'.$subtitles->getId(), $players->first()->filter('track[kind="captions"]')->attr('src'));
+        self::assertSame('/media/'.$poster->getId(), $players->first()->attr('poster'));
+        self::assertCount(0, $players->eq(1)->filter('track'));
+        self::assertNull($players->eq(1)->attr('poster'));
+        self::assertSame('/media/'.$video->getId().'#t=0.1', $players->eq(1)->filter('source')->attr('src'), 'Sans aperçu : image tirée de la vidéo.');
+
+        $this->login('reader');
+        $this->client->request('GET', '/media/'.$subtitles->getId());
+        self::assertResponseIsSuccessful();
+        self::assertResponseHeaderSame('Content-Type', 'text/vtt; charset=UTF-8');
+        self::assertStringStartsWith('inline', (string) $this->client->getResponse()->headers->get('Content-Disposition'));
+        $this->client->request('GET', '/media/'.$video->getId(), server: ['HTTP_RANGE' => 'bytes=0-9']);
+        self::assertResponseStatusCodeSame(206, 'Vidéo servie par morceaux (avance dans le lecteur).');
+    }
+
     public function testDisabledComponentIsStillRendered(): void
     {
-        static::getContainer()->get(EditorSettings::class)->save([
-            'video_hosts' => [], 'image_extensions' => ['png'], 'document_extensions' => ['pdf'], 'image_max_size' => 10,
-            'document_max_size' => 50, 'disabled_components' => ['alert'], 'image_directory' => 'image', 'document_directory' => 'document',
-        ]);
+        $this->saveSettings(['video_hosts' => [], 'image_extensions' => ['png'], 'document_extensions' => ['pdf'], 'disabled_components' => ['alert']]);
         self::assertStringContainsString('fr-alert--info', $this->render('<div data-component="alert" data-type="info"><div data-slot="body"><p>Texte</p></div></div>'), 'Contenu existant toujours affiché.');
     }
 
@@ -359,12 +392,7 @@ final class RenderingTest extends FunctionalTestCase
      */
     private function saveVideoHosts(array $hosts): void
     {
-        $settings = static::getContainer()->get(EditorSettings::class);
-        $settings->save([
-            'video_hosts' => $hosts, 'image_extensions' => ['jpg', 'png'], 'document_extensions' => ['pdf'], 'image_max_size' => 10,
-            'document_max_size' => 50, 'disabled_components' => [], 'image_directory' => 'image', 'document_directory' => 'document',
-        ]);
-        static::getContainer()->get('ckeditor_dsfr.component_registry')->reset();
+        $this->saveSettings(['video_hosts' => $hosts, 'image_extensions' => ['jpg', 'png'], 'document_extensions' => ['pdf']]);
     }
 
     private function render(string $content): string

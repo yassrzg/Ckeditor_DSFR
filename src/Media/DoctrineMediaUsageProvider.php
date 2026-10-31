@@ -13,7 +13,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * Usages déclarés dans ckeditor_dsfr.media_usages : entités dont un champ de l'éditeur cite le média
- * (data-media-id="12", data-media-ids="4,12,7") ou dont une relation pointe vers lui (vignette…).
+ * (data-media-id="12", data-poster-media-id="12", data-media-ids="4,12,7") ou dont une relation pointe vers lui (vignette…).
  */
 final readonly class DoctrineMediaUsageProvider implements MediaUsageProviderInterface
 {
@@ -67,9 +67,10 @@ final readonly class DoctrineMediaUsageProvider implements MediaUsageProviderInt
         }
         $id = (string) $media->getId();
         foreach ($declaration['content_fields'] as $i => $field) {
-            // Un média (data-media-id) ou une liste « 12,4,7 » (data-media-ids) : seul, premier, au milieu ou dernier.
-            foreach (['one' => '%data-media-id="'.$id.'"%', 'alone' => '%data-media-ids="'.$id.'"%', 'first' => '%data-media-ids="'.$id.',%',
-                'middle' => '%data-media-ids="%,'.$id.',%', 'last' => '%data-media-ids="%,'.$id.'"%'] as $key => $pattern) {
+            // Un média (data-media-id, data-poster-media-id…) ou une liste « 12,4,7 » (data-media-ids) : seul, premier,
+            // au milieu ou dernier.
+            foreach (['one' => '%media-id="'.$id.'"%', 'alone' => '%media-ids="'.$id.'"%', 'first' => '%media-ids="'.$id.',%',
+                'middle' => '%media-ids="%,'.$id.',%', 'last' => '%media-ids="%,'.$id.'"%'] as $key => $pattern) {
                 $conditions[] = 'e.'.$field.' LIKE :'.$key.$i;
                 $qb->setParameter($key.$i, $pattern);
             }

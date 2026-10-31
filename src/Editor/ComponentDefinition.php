@@ -15,6 +15,7 @@ namespace Yassrzg\CkeditorDsfrBundle\Editor;
  *   boutons) par @CkeditorDsfr/groups/<group>.html.twig ;
  * - layout : bloc de mise en page (colonnes, disposition dans le réglage « columns », ex. « 4-8 »), jamais placé dans
  *   la zone d'un autre composant ;
+ * - category : rubrique de la page des réglages (ex. « Médias », « Mise en page ») ;
  * - legacy : ancien composant, toujours affiché et modifiable mais plus proposé à l'insertion ni dans les réglages ;
  * - width : largeur minimale, en colonnes de la grille de 12, exigée dans une colonne d'un bloc « Colonnes » :
  *   ['min' => 3] ; 'grouped' : par élément d'une ligne de composants consécutifs du même groupe (cartes en grille,
@@ -39,6 +40,7 @@ final readonly class ComponentDefinition
         public bool $layout = false,
         public bool $legacy = false,
         public ?array $width = null,
+        public ?string $category = null,
     ) {
     }
 

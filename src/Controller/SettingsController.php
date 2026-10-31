@@ -59,7 +59,7 @@ final class SettingsController extends AbstractEditorController
      * Fichiers déplacés dans les nouveaux dossiers, avant l'enregistrement des réglages : si une catégorie échoue,
      * celle déjà déplacée revient dans son dossier et l'ancien réglage reste en vigueur.
      *
-     * @param array{image_directory: string, document_directory: string} $values
+     * @param array<string, mixed> $values réglages au format de EditorSettings::save() (<type>_directory par catégorie)
      *
      * @return array<string, int> nouveau dossier => nombre de fichiers déplacés
      *

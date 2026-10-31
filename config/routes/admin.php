@@ -9,11 +9,12 @@ declare(strict_types=1);
 
 use Yassrzg\CkeditorDsfrBundle\Controller\MediaAdminController;
 use Yassrzg\CkeditorDsfrBundle\Controller\SettingsController;
+use Yassrzg\CkeditorDsfrBundle\Enum\MediaType;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 use Symfony\Component\Routing\Requirement\Requirement;
 
 return static function (RoutingConfigurator $routes): void {
-    $type = ['type' => 'image|document'];
+    $type = ['type' => implode('|', array_column(MediaType::cases(), 'value'))];
     $id = ['id' => Requirement::DIGITS];
 
     $routes->add('ckeditor_dsfr_media_index', '/mediatheque/')->controller([MediaAdminController::class, 'index'])->methods(['GET']);

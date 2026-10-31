@@ -1,6 +1,22 @@
-{# Vidéo (lecteur d'une plateforme autorisée dans les réglages de l'éditeur) et transcription DSFR (RGAA). #}
+{#
+ # Vidéo et transcription DSFR (RGAA) : lecteur d'une plateforme autorisée dans les réglages de l'éditeur (lien), ou
+ # lecteur du navigateur pour un fichier de la médiathèque, avec sous-titres (.vtt) et image d'aperçu facultatifs.
+ #}
 <figure class="fr-content-media" role="group" aria-label="{{ c.values.caption ?? c.values.title }}">
-    <iframe title="{{ c.values.title }}" class="fr-responsive-vid" src="{{ c.values.url }}" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    {% if c.values.source == 'upload' %}
+        {% set video = c.files['media-id'] %}
+        {% set poster = c.files['poster-media-id'] ?? null %}
+        {% set subtitles = c.files['subtitles-media-id'] ?? null %}
+        <video class="fr-responsive-vid" controls preload="metadata" aria-label="{{ c.values.title }}"
+            {%- if poster %} poster="{{ path('ckeditor_dsfr_media_show', {id: poster.id}) }}"{% endif %}>
+            {# Sans image d'aperçu : « #t=0.1 » fait afficher une image de la vidéo par tous les navigateurs (Safari compris). #}
+            <source src="{{ path('ckeditor_dsfr_media_show', {id: video.id}) }}{{ poster ? '' : '#t=0.1' }}" type="{{ video.mimeType }}">
+            {% if subtitles %}<track kind="captions" src="{{ path('ckeditor_dsfr_media_show', {id: subtitles.id}) }}" srclang="fr" label="Français" default>{% endif %}
+            <a href="{{ path('ckeditor_dsfr_media_download', {id: video.id}) }}" download>Télécharger la vidéo « {{ c.values.title }} » <span class="fr-link__detail">{{ video.detail }}</span></a>
+        </video>
+    {% else %}
+        <iframe title="{{ c.values.title }}" class="fr-responsive-vid" src="{{ c.values.url }}" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    {% endif %}
     {% if c.values.caption %}<figcaption class="fr-content-media__caption">{{ c.values.caption }}</figcaption>{% endif %}
 </figure>
 {% if c.values.transcription %}
