@@ -10,8 +10,8 @@ import { ButtonView, Command, Plugin, TableUtils, Widget, WidgetToolbarRepositor
  *   bloc « Colonnes »      : <div data-component="columns" data-columns="4-8"><div data-slot="column">…</div><div data-slot="column">…</div></div>
  *
  * Modèle : cmpAtom (sans zone), cmpBox (avec zones cmpSlotInline / cmpSlotBlock), cmpLayout (bloc de mise en page,
- * une cmpColumn par largeur de sa disposition). Un composant à zones ne peut pas être placé dans la zone d'un autre (un
- * accordéon dans un accordéon), un composant atomique oui ; une colonne accepte tout, sauf un autre bloc « Colonnes ».
+ * une cmpColumn par largeur de sa disposition). Une zone de contenu et une colonne acceptent tous les composants (colonnes
+ * dans un accordéon, tableau dans un onglet…) ; aucun composant dans un titre (zone sur une ligne) ni dans une cellule.
  * Un tableau (plugin Table de CKEditor) ne se place que dans une zone « tables » (composant Tableau) ; aucun composant
  * dans une cellule. Réglages par média (champ medias avec items) : attribut data-<champ>-settings (JSON).
  * L'interface (fenêtre de réglages, aperçus) est fournie par le contrôleur Stimulus ckeditor-dsfr (paramètre ui).
@@ -54,10 +54,8 @@ export function createComponentsPlugin(definitions, ui) {
     class InsertComponentCommand extends Command {
         refresh() {
             const position = this.editor.model.document.selection.getFirstPosition();
-            // Pas de composant dans un titre ; dans une zone de contenu, composants atomiques seulement ; dans une
-            // colonne, tout sauf un autre bloc « Colonnes ».
+            // Pas de composant dans un titre ni dans une cellule de tableau ; tous ailleurs.
             this.isEnabled = !position?.findAncestor(SLOT_INLINE) && !position?.findAncestor('tableCell');
-            this.value = { inSlot: Boolean(position?.findAncestor(SLOT_BLOCK)), inColumn: Boolean(position?.findAncestor(COLUMN)) };
         }
 
         execute({ name, values }) {
@@ -227,8 +225,6 @@ export function createComponentsPlugin(definitions, ui) {
             schema.register(COLUMN, { isLimit: true, allowIn: LAYOUT, allowContentOf: '$root', allowAttributes: ['cmpSlot'] });
             schema.addChildCheck((context, child) => {
                 const names = [...context.getNames()];
-                if (child.name === BOX && names.includes(SLOT_BLOCK)) return false;
-                if (child.name === LAYOUT && names.some((name) => [SLOT_BLOCK, SLOT_INLINE, COLUMN].includes(name))) return false;
                 // Aucun composant dans une cellule de tableau.
                 if (COMPONENTS.includes(child.name) && names.includes('tableCell')) return false;
                 // Tableau : seulement dans la zone « tables » d'un composant (Tableau).
@@ -353,7 +349,7 @@ export function createComponentsPlugin(definitions, ui) {
                 const button = new ButtonView(locale);
                 button.set({ label: 'Insérer un composant', withText: true, tooltip: 'Image, téléchargement, carte, bouton, accordéon…' });
                 button.bind('isEnabled').to(editor.commands.get('insertComponent'));
-                button.on('execute', () => ui.open({ mode: 'insert', ...editor.commands.get('insertComponent').value }));
+                button.on('execute', () => ui.open({ mode: 'insert' }));
 
                 return button;
             });

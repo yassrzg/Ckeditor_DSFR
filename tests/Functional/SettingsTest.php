@@ -91,9 +91,8 @@ final class SettingsTest extends FunctionalTestCase
         self::assertFalse($insertable['media-text'], 'Ancien composant « Image et texte » : remplacé par « Colonnes ».');
         self::assertTrue($insertable['card']);
         self::assertTrue($insertable['columns']);
-        $choices = $page->filter('[data-ckeditor-dsfr-target="choice"] button')->each(static fn (Crawler $b): string => (string) $b->attr('data-ckeditor-dsfr-name-param'));
+        $choices = $page->filter('.cmp-chooser button')->each(static fn (Crawler $b): string => (string) $b->attr('data-ckeditor-dsfr-name-param'));
         self::assertSame(array_keys(array_filter($insertable)), $choices);
-        self::assertSame('1', $page->filter('[data-ckeditor-dsfr-name-param="columns"]')->closest('li')?->attr('data-layout'));
         self::assertCount(1, $page->filter('[data-ckeditor-dsfr-target="panel"][data-component-name="tab"]'), 'Réglages d\'un composant retiré toujours modifiables.');
         self::assertCount(1, $page->filter('[data-ckeditor-dsfr-target="notices"]'));
         self::assertSame('<p>Ancien texte</p><p>simple</p>', $page->filter('textarea')->text(), 'Ancienne valeur en texte simple convertie.');

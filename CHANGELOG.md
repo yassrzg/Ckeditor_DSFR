@@ -11,6 +11,8 @@
 - Composants atomiques déplaçables par leur poignée (glisser-déposer de CKEditor).
 - **Catalogue YAML** (`config/components.yaml`) : composants, réglages, listes, conditions et largeurs déclarés en YAML,
   contrôlés au démarrage ; fichiers du projet (`component_files`) pour ajouter, remplacer ou retirer un composant.
+- Tous les composants acceptés dans les zones de contenu et les colonnes (colonnes dans un accordéon, accordéon dans
+  un onglet…), sauf dans un titre et une cellule de tableau.
 - Nouveaux composants : Tableau (outil tableau de CKEditor, `fr-table`), Bouton avec fenêtre (`fr-modal`), Bandeau
   d'information (`fr-notice`), Badge, Tag ; badge dans la carte ; citation avec image, lien de la source et précisions.
 - Composants Icône et Pictogramme (ressources du DSFR local) ; lien de la carte facultatif (sans lien, la carte n'est

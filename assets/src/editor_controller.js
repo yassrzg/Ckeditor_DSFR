@@ -22,7 +22,8 @@ import { createComponentsPlugin } from './components_plugin.js';
  * Sans JavaScript ou si l'éditeur ne se charge pas, la zone de texte HTML reste utilisable.
  * Plusieurs documents : chacun peut avoir ses propres réglages (bouton « Personnaliser » : pictogramme, apparence…),
  * enregistrés en JSON dans data-<champ>-settings et prioritaires sur ceux du composant.
- * Tableaux : outil tableau de CKEditor, actif seulement dans le composant Tableau.
+ * Tableaux : composant Tableau (tableau 3 × 3 prêt à remplir) ; lignes, colonnes et fusion par la barre qui apparaît
+ * dans le tableau (outil tableau de CKEditor, sans bouton dans la barre principale : un tableau n'existe que dans ce composant).
  * Bloc « Colonnes » : une modification qui rend une colonne trop étroite pour son contenu (ex. 4 cartes, 12 colonnes,
  * dans une colonne de 6) est annulée et signalée par une alerte en haut à droite de l'écran.
  */
@@ -32,7 +33,7 @@ const NOTICE_DELAY = 10000;
 
 export default class extends Controller {
     static targets = [
-        'source', 'status', 'opener', 'dialog', 'title', 'chooser', 'choice', 'panel', 'submit', 'back', 'footer',
+        'source', 'status', 'opener', 'dialog', 'title', 'chooser', 'panel', 'submit', 'back', 'footer',
         'library', 'librarySearch', 'libraryStatus', 'libraryGrid', 'libraryValidate', 'libraryAdd', 'libraryAddButton', 'notices',
     ];
     static values = { components: Array, mediaUrl: String, quickAddUrl: String, artworkUrl: String, label: String };
@@ -54,7 +55,7 @@ export default class extends Controller {
                 label: this.labelValue,
                 plugins: [Essentials, Paragraph, Heading, Bold, Italic, RemoveFormat, Link, List, HorizontalLine, Autoformat, PasteFromOffice, Table, TableToolbar, Components],
                 toolbar: {
-                    items: ['heading', '|', 'bold', 'italic', 'removeFormat', '|', 'link', 'bulletedList', 'numberedList', 'horizontalLine', '|', 'insertComponent', 'insertTable', '|', 'undo', 'redo'],
+                    items: ['heading', '|', 'bold', 'italic', 'removeFormat', '|', 'link', 'bulletedList', 'numberedList', 'horizontalLine', '|', 'insertComponent', '|', 'undo', 'redo'],
                     shouldNotGroupWhenFull: true,
                 },
                 heading: {
@@ -142,7 +143,7 @@ export default class extends Controller {
 
     // --- Fenêtre de réglages ---------------------------------------------------------------------------------------
 
-    async open({ mode, inSlot = false, inColumn = false, element = null, name = null, values = {} }) {
+    async open({ mode, element = null, name = null, values = {} }) {
         this.dialogState = { mode, element, name: null };
         this.libraryState = null;
         this.cancelMedia();
@@ -150,11 +151,6 @@ export default class extends Controller {
         this.footerTarget.hidden = false;
         this.titleTarget.textContent = 'edit' === mode ? `Modifier : ${this.definitions.get(name).label}` : 'Insérer un composant';
         this.chooserTarget.hidden = 'edit' === mode;
-        // Dans la zone de contenu d'un composant, pas de composant à zones (pas d'accordéon dans un accordéon) ; dans
-        // une colonne, pas d'autre bloc « Colonnes ».
-        this.choiceTargets.forEach((item) => {
-            item.hidden = (inSlot && '1' === item.dataset.box) || ((inSlot || inColumn) && '1' === item.dataset.layout);
-        });
         this.panelTargets.forEach((panel) => { panel.hidden = true; });
         this.submitTarget.hidden = true;
         this.backTarget.hidden = true;
