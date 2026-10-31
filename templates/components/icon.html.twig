@@ -1,0 +1,9 @@
+{#
+ # Icône du DSFR (classe fr-icon-*), taille et alignement ; texte facultatif à sa droite. Sans texte : décorative, ou
+ # annoncée aux lecteurs d'écran par son texte alternatif (fr-sr-only).
+ #}
+{% set v = c.values %}
+<p class="cmp-artwork cmp-artwork--{{ v.align }}">
+    <span class="{{ v.icon }}{{ v.size != 'md' ? ' fr-icon--' ~ v.size }}" aria-hidden="true"></span>
+    {%- if v.text %} {{ v.text }}{% elseif v.alt %}<span class="fr-sr-only">{{ v.alt }}</span>{% endif -%}
+</p>

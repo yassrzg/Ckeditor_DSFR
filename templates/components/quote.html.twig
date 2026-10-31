@@ -1,0 +1,22 @@
+{# Citation : auteur, source (lien facultatif), précisions, image facultative (disposition fr-quote--column imposée par le DSFR), couleur d'accentuation. #}
+{% set v = c.values %}
+<figure class="fr-quote{{ v.color != 'default' ? ' fr-quote--' ~ v.color }}{{ c.media ? ' fr-quote--column' }} fr-mb-6v">
+    <blockquote{% if v['source-url'] %} cite="{{ v['source-url'] }}"{% endif %}>{{ c.slots.body|raw }}</blockquote>
+    {% if v.author or v.source or v.details or c.media %}
+        <figcaption>
+            {% if v.author %}<p class="fr-quote__author">{{ v.author }}</p>{% endif %}
+            {% if v.source or v.details %}
+                <ul class="fr-quote__source">
+                    {% if v.source %}<li><cite>{% if v['source-url'] %}<a href="{{ v['source-url'] }}">{{ v.source }}</a>{% else %}{{ v.source }}{% endif %}</cite></li>{% endif %}
+                    {% if v.details %}<li>{{ v.details }}</li>{% endif %}
+                </ul>
+            {% endif %}
+            {% if c.media %}
+                <div class="fr-quote__image">
+                    <img class="fr-responsive-img" src="{{ path('ckeditor_dsfr_media_show', {id: c.media.id}) }}" alt="" loading="lazy"
+                        {%- if c.media.width and c.media.height %} width="{{ c.media.width }}" height="{{ c.media.height }}"{% endif %}>
+                </div>
+            {% endif %}
+        </figcaption>
+    {% endif %}
+</figure>

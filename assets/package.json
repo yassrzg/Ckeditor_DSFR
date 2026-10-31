@@ -1,0 +1,20 @@
+{
+    "name": "@yassrzg/ckeditor-dsfr-bundle",
+    "description": "Éditeur CKEditor 5 à composants DSFR (contrôleur Stimulus)",
+    "license": "GPL-2.0-or-later",
+    "version": "1.0.0",
+    "type": "module",
+    "symfony": {
+        "controllers": {
+            "editor": {
+                "main": "src/editor_controller.js",
+                "name": "ckeditor-dsfr",
+                "fetch": "lazy",
+                "enabled": true
+            }
+        }
+    },
+    "peerDependencies": {
+        "@hotwired/stimulus": "^3.0.0"
+    }
+}

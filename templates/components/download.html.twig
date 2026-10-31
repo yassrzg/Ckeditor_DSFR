@@ -1,0 +1,39 @@
+{# Documents de la médiathèque, dans l'ordre choisi : liens (groupe de liens DSFR), cartes ou tuiles en grille (variantes DSFR, réglables document par document). Format et poids affichés (RGAA). #}
+{% import '@CkeditorDsfr/_macros.html.twig' as editor %}
+{% macro link(m) %}<a class="fr-link fr-link--download" download href="{{ path('ckeditor_dsfr_media_download', {id: m.id}) }}">{{ m.title }} <span class="fr-link__detail">{{ m.detail }}</span></a>{% endmacro %}
+{% if c.values.variant in ['card', 'tile'] %}
+    {#- Cartes de téléchargement toujours horizontales (DSFR) : 2 par ligne au plus. -#}
+    {% set col = editor.grid_col(c.medias|length, c.values.variant == 'card' or c.values.orientation == 'horizontal') %}
+    <ul class="fr-grid-row fr-grid-row--gutters fr-raw-list fr-mb-6v">
+        {% for m in c.medias %}
+            {#- Réglages propres au document (pictogramme, apparence…) prioritaires sur ceux du composant. -#}
+            {% set v = c.values|merge(c.mediaSettings[m.id] ?? {}) %}
+            <li class="{{ col }}">
+                {% if c.values.variant == 'tile' %}
+                    {{ editor.tile(m.title, path('ckeditor_dsfr_media_download', {id: m.id}), v|merge({pictogram: v.pictogram ?: 'document/document-download', size: v.size == 'lg' ? 'md' : v.size}), {description: m.description, detail: m.detail, download: true}) }}
+                {% else %}
+                    <div class="fr-card fr-enlarge-link fr-card--download{{ editor.variants('fr-card', v) }}">
+                        <div class="fr-card__body">
+                            <div class="fr-card__content">
+                                <h3 class="fr-card__title"><a download href="{{ path('ckeditor_dsfr_media_download', {id: m.id}) }}">{{ m.title }}</a></h3>
+                                {% if m.description %}<p class="fr-card__desc">{{ m.description }}</p>{% endif %}
+                                <div class="fr-card__end"><p class="fr-card__detail">{{ m.detail }}</p></div>
+                            </div>
+                        </div>
+                        {% if v.pictogram %}{{ editor.card_pictogram(v.pictogram) }}{% endif %}
+                    </div>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    {% if c.medias|length == 1 %}
+        <p>{{ _self.link(c.medias[0]) }}</p>
+    {% else %}
+        <div class="fr-downloads-group fr-mb-6v">
+            <ul>
+                {% for m in c.medias %}<li>{{ _self.link(m) }}</li>{% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+{% endif %}

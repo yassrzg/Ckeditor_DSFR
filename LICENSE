@@ -1,0 +1,13 @@
+CKEditor DSFR bundle (yassrzg/ckeditor-dsfr-bundle)
+
+SPDX-License-Identifier: GPL-2.0-or-later
+
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later
+version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+details: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+
+Third-party software included:
+- CKEditor 5 (assets/vendor/ckeditor5), GPL-2.0-or-later, see assets/vendor/ckeditor5/LICENSE.md.
+- SortableJS 1.15.7 (assets/vendor/sortablejs), MIT License, https://github.com/SortableJS/Sortable.

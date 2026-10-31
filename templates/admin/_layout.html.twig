@@ -1,0 +1,15 @@
+{#
+ # Pages d'administration du bundle : elles étendent le gabarit du projet (ckeditor_dsfr.layout) et remplissent son
+ # bloc « body ». Pour un autre bloc ou une autre mise en page, surcharger ce fichier :
+ # templates/bundles/CkeditorDsfrBundle/admin/_layout.html.twig (blocs fournis : ckeditor_dsfr_title, ckeditor_dsfr_content).
+ #}
+{% extends ckeditor_dsfr_layout() %}
+
+{% block title %}{% block ckeditor_dsfr_title %}{% endblock %}{% endblock %}
+
+{% block body %}
+    <main class="fr-container fr-my-6v" id="contenu" role="main">
+        {{ include('@CkeditorDsfr/admin/_flashes.html.twig') }}
+        {{ block('ckeditor_dsfr_content') }}
+    </main>
+{% endblock %}

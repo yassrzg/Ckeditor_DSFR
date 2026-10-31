@@ -1,0 +1,30 @@
+{# Vidéo (lecteur d'une plateforme autorisée dans les réglages de l'éditeur) et transcription DSFR (RGAA). #}
+<figure class="fr-content-media" role="group" aria-label="{{ c.values.caption ?? c.values.title }}">
+    <iframe title="{{ c.values.title }}" class="fr-responsive-vid" src="{{ c.values.url }}" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    {% if c.values.caption %}<figcaption class="fr-content-media__caption">{{ c.values.caption }}</figcaption>{% endif %}
+</figure>
+{% if c.values.transcription %}
+    <div class="fr-transcription fr-mb-6v">
+        <button type="button" class="fr-transcription__btn" aria-expanded="false" aria-controls="{{ c.id }}-collapse">Transcription</button>
+        <div class="fr-collapse" id="{{ c.id }}-collapse">
+            <dialog id="{{ c.id }}-modal" class="fr-modal" aria-labelledby="{{ c.id }}-title">
+                <div class="fr-container fr-container--fluid fr-container-md">
+                    <div class="fr-grid-row fr-grid-row--center">
+                        <div class="fr-col-12 fr-col-md-10 fr-col-lg-8">
+                            <div class="fr-modal__body">
+                                <div class="fr-modal__header">
+                                    <button type="button" class="fr-btn--fullscreen" aria-controls="{{ c.id }}-modal" title="Agrandir la transcription">Agrandir</button>
+                                    <button type="button" class="fr-btn--close fr-btn" aria-controls="{{ c.id }}-modal" title="Fermer">Fermer</button>
+                                </div>
+                                <div class="fr-modal__content">
+                                    <h1 id="{{ c.id }}-title" class="fr-modal__title">{{ c.values.title }}</h1>
+                                    <div>{{ c.values.transcription|nl2br }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </dialog>
+        </div>
+    </div>
+{% endif %}

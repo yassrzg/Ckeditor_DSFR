@@ -1,0 +1,4 @@
+{# Tag DSFR : simple ou cliquable (lien, couleur d'accentuation), petite taille, icône du DSFR à gauche. #}
+{% set v = c.values %}
+{% set classes = 'fr-tag' ~ (v.size == 'sm' ? ' fr-tag--sm') ~ (v.icon ? ' fr-tag--icon-left ' ~ v.icon) ~ (v.url and (v.color ?? 'default') != 'default' ? ' fr-tag--' ~ v.color) %}
+{% if v.url %}<a class="{{ classes }}" href="{{ v.url }}">{{ v.label }}</a>{% else %}<p class="{{ classes }}">{{ v.label }}</p>{% endif %}

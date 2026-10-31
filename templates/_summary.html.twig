@@ -1,0 +1,25 @@
+{#
+ # Sommaire DSFR d'un contenu (titres de section et sous-titres, liens vers leurs ancres), replié par défaut :
+ # le titre est un bouton qui le déplie (repli DSFR, état annoncé par aria-expanded). Variables : summary, id.
+ #}
+<nav class="fr-summary cmp-summary fr-mb-6v" role="navigation" aria-labelledby="{{ id }}-title">
+    <p class="fr-summary__title" id="{{ id }}-title">
+        <button type="button" class="cmp-summary__toggle" aria-expanded="false" aria-controls="{{ id }}-list">
+            Sommaire<span class="fr-icon-arrow-down-s-line cmp-summary__icon" aria-hidden="true"></span>
+        </button>
+    </p>
+    <div class="fr-collapse" id="{{ id }}-list">
+        <ol>
+            {% for entry in summary %}
+                <li>
+                    <a class="fr-summary__link" href="#{{ entry.id }}">{{ entry.text }}</a>
+                    {% if entry.children is not empty %}
+                        <ol>
+                            {% for child in entry.children %}<li><a class="fr-summary__link" href="#{{ child.id }}">{{ child.text }}</a></li>{% endfor %}
+                        </ol>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ol>
+    </div>
+</nav>

@@ -1,0 +1,7 @@
+{# Image de la médiathèque : format (ratio DSFR), taille (petite, moyenne, grande), légende ; texte alternatif repris de la médiathèque. #}
+{% set m = c.media %}
+<figure class="fr-content-media cmp-image cmp-image--{{ c.values.size }}" role="group"{% if c.values.caption %} aria-label="{{ c.values.caption }}"{% endif %}>
+    <img class="fr-responsive-img fr-ratio-{{ c.values.ratio }} cmp-img" src="{{ path('ckeditor_dsfr_media_show', {id: m.id}) }}" alt="{{ m.altText }}" loading="lazy"
+        {%- if m.width and m.height %} width="{{ m.width }}" height="{{ m.height }}"{% endif %}>
+    {% if c.values.caption %}<figcaption class="fr-content-media__caption">{{ c.values.caption }}</figcaption>{% endif %}
+</figure>

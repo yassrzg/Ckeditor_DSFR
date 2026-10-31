@@ -1,0 +1,48 @@
+{% extends '@CkeditorDsfr/admin/_layout.html.twig' %}
+{% import '@CkeditorDsfr/admin/_macros.html.twig' as ui %}
+{% form_theme form '@CkeditorDsfr/form/fields.html.twig' %}
+
+{% set title = media.id ? 'Modifier ' ~ (media.image ? 'l’image' : 'le document') : 'Ajouter ' ~ (media.image ? 'une image' : 'un document') %}
+{% block ckeditor_dsfr_title %}Médiathèque - {{ title }}{% endblock %}
+
+{% block ckeditor_dsfr_content %}
+    <a class="fr-link fr-icon-arrow-left-line fr-link--icon-left" href="{{ path('ckeditor_dsfr_media_index', {type: media.type.value}) }}">Retour à la médiathèque</a>
+    <h1 class="fr-h2 fr-mt-4v">{{ title }}</h1>
+    <div class="fr-grid-row fr-grid-row--gutters">
+        <div class="fr-col-12 fr-col-md-7">
+            {{ form_start(form) }}
+                {{ form_widget(form) }}
+                <ul class="fr-btns-group fr-btns-group--inline-md fr-btns-group--icon-left">
+                    <li><button type="submit" class="fr-btn fr-btn--icon-left fr-icon-save-line">Enregistrer</button></li>
+                    <li><a class="fr-btn fr-btn--secondary fr-btn--icon-left fr-icon-arrow-go-back-fill" href="{{ path('ckeditor_dsfr_media_index', {type: media.type.value}) }}">Annuler</a></li>
+                </ul>
+            {{ form_end(form) }}
+        </div>
+        {% if media.id %}
+            <div class="fr-col-12 fr-col-md-5">
+                <h2 class="fr-h5">Fichier actuel</h2>
+                {% if media.image %}
+                    <img class="fr-responsive-img cmp-media-preview" src="{{ path('ckeditor_dsfr_media_show', {id: media.id}) }}" alt="Aperçu : {{ media.altText ?: media.title }}">
+                {% endif %}
+                <p class="fr-text--sm fr-mt-2v">{{ media.originalName }} — {{ media.detail }}{% if media.width %} · {{ media.width }}×{{ media.height }} pixels{% endif %}</p>
+                <p><a class="fr-link fr-link--download" download href="{{ path('ckeditor_dsfr_media_download', {id: media.id}) }}">Télécharger <span class="fr-link__detail">{{ media.detail }}</span></a></p>
+
+                <h2 class="fr-h5">Utilisation</h2>
+                {% if usages is empty %}
+                    <p class="fr-text--sm">Utilisé par aucun contenu.</p>
+                    {{ ui.confirm_action('delete-media-' ~ media.id, path('ckeditor_dsfr_media_delete', {id: media.id}), 'ckeditor-dsfr-delete-media-' ~ media.id, {
+                        label: 'Supprimer le média',
+                        title: 'Supprimer le média',
+                        message: '« ' ~ media.title ~ ' » sera définitivement supprimé de la médiathèque.',
+                        confirm_label: 'Supprimer',
+                    }) }}
+                {% else %}
+                    <p class="fr-text--sm">Utilisé par {{ usages|length }} contenu{{ usages|length > 1 ? 's' }} (suppression impossible) :</p>
+                    <ul>
+                        {% for usage in usages %}<li>{% if usage.url %}<a class="fr-link" href="{{ usage.url }}">{{ usage.label }}</a>{% else %}{{ usage.label }}{% endif %}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

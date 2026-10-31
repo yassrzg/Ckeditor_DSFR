@@ -1,0 +1,13 @@
+{# Image et texte côte à côte (grille DSFR) ; l'un sous l'autre sur mobile, l'image d'abord. #}
+{% set m = c.media %}
+{% set image = {sm: 4, md: 6, lg: 8}[c.values.size] %}
+<div class="fr-grid-row fr-grid-row--gutters fr-mb-6v cmp-media-text{{ c.values.position == 'right' ? ' cmp-media-text--right' }}">
+    <div class="fr-col-12 fr-col-md-{{ image }} cmp-media-text__media">
+        <figure class="fr-content-media fr-my-0" role="group"{% if c.values.caption %} aria-label="{{ c.values.caption }}"{% endif %}>
+            <img class="fr-responsive-img fr-ratio-{{ c.values.ratio }} cmp-img" src="{{ path('ckeditor_dsfr_media_show', {id: m.id}) }}" alt="{{ m.altText }}" loading="lazy"
+                {%- if m.width and m.height %} width="{{ m.width }}" height="{{ m.height }}"{% endif %}>
+            {% if c.values.caption %}<figcaption class="fr-content-media__caption">{{ c.values.caption }}</figcaption>{% endif %}
+        </figure>
+    </div>
+    <div class="fr-col-12 fr-col-md-{{ 12 - image }} cmp-media-text__text">{{ c.slots.body|raw }}</div>
+</div>

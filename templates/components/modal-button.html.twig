@@ -1,0 +1,7 @@
+{#
+ # Bouton qui ouvre une fenêtre modale DSFR (ouverture, fermeture, piège du focus et touche Échap gérés par le JavaScript
+ # du DSFR). Toujours dans un groupe de boutons : la fenêtre (_modal.html.twig) est rendue après le groupe, hors de
+ # fr-btns-group dont les règles s'appliqueraient sinon à ses propres boutons.
+ #}
+{% import '@CkeditorDsfr/_macros.html.twig' as editor %}
+<button type="button" class="{{ editor.button_classes(c.values) }}" data-fr-opened="false" aria-controls="{{ c.id }}-modal">{{ c.values.label }}</button>

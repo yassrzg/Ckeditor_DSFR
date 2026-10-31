@@ -1,0 +1,29 @@
+{#
+ # Carte (grille si plusieurs à la suite) : lien facultatif (carte entièrement cliquable), image facultative et décorative
+ # (ou pictogramme du DSFR), badge, détail avec icône du DSFR, orientation, taille et apparence.
+ #}
+{% import '@CkeditorDsfr/_macros.html.twig' as editor %}
+{% set v = c.values %}
+<div class="fr-card{{ v.url ? ' fr-enlarge-link' }}{{ editor.variants('fr-card', v) }}">
+    <div class="fr-card__body">
+        <div class="fr-card__content">
+            <h3 class="fr-card__title">{% if v.url %}<a href="{{ v.url }}">{{ v.title }}</a>{% else %}{{ v.title }}{% endif %}</h3>
+            {% if c.values.description %}<p class="fr-card__desc">{{ c.values.description }}</p>{% endif %}
+            {% if c.values.badge %}
+                <div class="fr-card__start"><ul class="fr-badges-group"><li>{{ editor.badge(c.values.badge, c.values['badge-type'], 'sm') }}</li></ul></div>
+            {% endif %}
+            {% if c.values.detail %}
+                <div class="fr-card__end"><p class="fr-card__detail{{ c.values.icon ? ' ' ~ c.values.icon }}">{{ c.values.detail }}</p></div>
+            {% endif %}
+        </div>
+    </div>
+    {% if c.media %}
+        <div class="fr-card__header">
+            <div class="fr-card__img">
+                <img class="fr-responsive-img fr-ratio-16x9 cmp-img" src="{{ path('ckeditor_dsfr_media_show', {id: c.media.id}) }}" alt="" loading="lazy">
+            </div>
+        </div>
+    {% elseif c.values.pictogram %}
+        {{ editor.card_pictogram(c.values.pictogram) }}
+    {% endif %}
+</div>

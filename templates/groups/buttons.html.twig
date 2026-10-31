@@ -1,0 +1,13 @@
+{#
+ # Boutons consécutifs : groupe de boutons en ligne (empilés sur mobile). Le DSFR règle au niveau du groupe la taille et
+ # la place des icônes (sans classe d'icône, il réduirait les boutons à leur icône) : taille du premier bouton, icônes à
+ # droite si tous les boutons avec icône les placent à droite, sinon à gauche. Fenêtres des boutons « avec fenêtre »
+ # rendues après le groupe.
+ #}
+{% set withIcon = items|filter(i => i.values.icon) %}
+{% set iconSide = withIcon is empty ? null : (withIcon|filter(i => i.values['icon-position'] == 'right')|length == withIcon|length ? 'right' : 'left') %}
+{% set size = items[0].values.size %}
+<ul class="fr-btns-group fr-btns-group--inline-md{{ iconSide ? ' fr-btns-group--icon-' ~ iconSide }}{{ size != 'md' ? ' fr-btns-group--' ~ size }} fr-mb-4v">
+    {% for item in items %}<li>{{ item.html|raw }}</li>{% endfor %}
+</ul>
+{% for item in items|filter(i => i.name == 'modal-button') %}{% include '@CkeditorDsfr/components/_modal.html.twig' with {c: item} only %}{% endfor %}

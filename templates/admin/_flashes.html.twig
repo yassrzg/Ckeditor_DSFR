@@ -1,0 +1,6 @@
+{# Messages des pages du bundle (succès, erreur), en alertes DSFR. #}
+{% for type, kind in {ckeditor_dsfr_success: 'success', ckeditor_dsfr_error: 'error'} %}
+    {% for message in app.flashes(type) %}
+        <div class="fr-alert fr-alert--{{ kind }} fr-alert--sm fr-mb-4v" role="{{ kind == 'error' ? 'alert' : 'status' }}"><p>{{ message }}</p></div>
+    {% endfor %}
+{% endfor %}

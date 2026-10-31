@@ -1,0 +1,3 @@
+{# Badge DSFR (toujours dans un groupe de badges : groups/badges.html.twig). #}
+{% import '@CkeditorDsfr/_macros.html.twig' as editor %}
+{{ editor.badge(c.values.label, c.values.type, c.values.size, c.values.icon ?? 'yes') }}

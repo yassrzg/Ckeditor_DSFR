@@ -1,0 +1,7 @@
+{# Accordéon (groupe si plusieurs à la suite) ; titre en texte simple (pas de lien dans un bouton). #}
+<section class="fr-accordion">
+    <h3 class="fr-accordion__title">
+        <button type="button" class="fr-accordion__btn" aria-expanded="false" aria-controls="{{ c.id }}">{{ c.slots.title|striptags|raw }}</button>
+    </h3>
+    <div class="fr-collapse" id="{{ c.id }}">{{ c.slots.body|raw }}</div>
+</section>

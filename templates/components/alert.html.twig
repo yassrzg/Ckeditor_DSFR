@@ -1,0 +1,5 @@
+{# Alerte (information, succès, avertissement, erreur) ; sans titre : variante compacte. #}
+<div class="fr-alert fr-alert--{{ c.values.type }}{{ c.slots.title ? '' : ' fr-alert--sm' }} fr-mb-6v">
+    {% if c.slots.title %}<h3 class="fr-alert__title">{{ c.slots.title|raw }}</h3>{% endif %}
+    {{ c.slots.body|raw }}
+</div>

@@ -1,0 +1,39 @@
+{% extends '@CkeditorDsfr/admin/_layout.html.twig' %}
+{% form_theme form '@CkeditorDsfr/form/fields.html.twig' %}
+
+{% block ckeditor_dsfr_title %}Réglages de l’éditeur{% endblock %}
+
+{% block ckeditor_dsfr_content %}
+    <a class="fr-link fr-icon-arrow-left-line fr-link--icon-left" href="{{ path('ckeditor_dsfr_media_index') }}">Médiathèque</a>
+    <h1 class="fr-h2 fr-mt-4v">Réglages de l’éditeur</h1>
+    {{ form_start(form) }}
+        <section class="fr-mb-6v" aria-labelledby="settings-components">
+            <h2 class="fr-h4" id="settings-components">Composants</h2>
+            {{ form_row(form.enabled_components) }}
+        </section>
+        <section class="fr-mb-6v" aria-labelledby="settings-videos">
+            <h2 class="fr-h4" id="settings-videos">Vidéos</h2>
+            <p class="fr-text--sm">Les contenus peuvent intégrer des vidéos hébergées uniquement sur ces plateformes, autorisées aussi dans la
+                politique de sécurité du site (frame-src) : n’ajoutez que des plateformes de confiance. Les adresses de page YouTube,
+                Dailymotion et Vimeo sont converties automatiquement en lecteur intégré.</p>
+            {{ form_row(form.video_hosts) }}
+        </section>
+        <section class="fr-mb-6v" aria-labelledby="settings-images">
+            <h2 class="fr-h4" id="settings-images">Images</h2>
+            {{ form_row(form.image_extensions) }}
+            {{ form_row(form.image_max_size) }}
+            {{ form_row(form.image_directory) }}
+        </section>
+        <section class="fr-mb-6v" aria-labelledby="settings-documents">
+            <h2 class="fr-h4" id="settings-documents">Documents</h2>
+            {{ form_row(form.document_extensions) }}
+            {{ form_row(form.document_max_size) }}
+            {{ form_row(form.document_directory) }}
+        </section>
+        {{ form_rest(form) }}
+        <ul class="fr-btns-group fr-btns-group--inline-md fr-btns-group--icon-left">
+            <li><button type="submit" class="fr-btn fr-btn--icon-left fr-icon-save-line">Enregistrer</button></li>
+            <li><a class="fr-btn fr-btn--secondary fr-btn--icon-left fr-icon-arrow-go-back-fill" href="{{ path('ckeditor_dsfr_media_index') }}">Annuler</a></li>
+        </ul>
+    {{ form_end(form) }}
+{% endblock %}
