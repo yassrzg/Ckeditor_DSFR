@@ -8,8 +8,9 @@ listes, ligne de séparation, **Insérer un composant**, annuler / rétablir. Ra
 
 **Insérer un composant** ouvre une fenêtre DSFR : choix du composant, puis ses réglages. Un composant apparaît dans un
 cadre avec ses réglages ; sélectionné, sa barre propose *Modifier les réglages* et *Supprimer le composant*. Les zones de
-contenu (accordéon, onglet, encadrés) acceptent du texte et les composants sans zone, pas un composant à zones (pas
-d'accordéon dans un accordéon). Un composant se déplace par sa poignée (glisser-déposer de CKEditor) ou par couper /
+contenu (accordéon, onglet, encadrés, fenêtre) et les colonnes acceptent **tous les composants** (ex. un bloc
+« Colonnes » image + texte dans un accordéon, un tableau dans un onglet) ; seuls un titre (zone sur une ligne) et une
+cellule de tableau n'en acceptent pas. Un composant se déplace par sa poignée (glisser-déposer de CKEditor) ou par couper /
 coller, y compris d'une colonne à l'autre.
 
 | Composant | Réglages / zones | Affichage DSFR |
@@ -21,7 +22,7 @@ coller, y compris d'une colonne à l'autre.
 | Tuile | titre, description, lien, pictogramme ; orientation, taille, apparence | Tuile, en grille avec les cartes |
 | Bouton | libellé, lien, style, taille, icône (à gauche ou à droite) | Bouton ; plusieurs à la suite : groupe de boutons |
 | Bouton avec fenêtre | libellé, style, taille, icône, largeur de la fenêtre ; titre et contenu de la fenêtre | Bouton qui ouvre une fenêtre modale DSFR (`fr-modal`) ; groupé avec les boutons, fenêtre rendue après le groupe |
-| Tableau | titre (caption, RGAA) au-dessus, en dessous ou masqué, taille, bordures, largeur des colonnes, couleur ; tableau rédigé dans l'éditeur (outil tableau de CKEditor : lignes, colonnes, en-têtes, fusion) | `fr-table` (`--bordered`, `--sm`/`--lg`, `--layout-fixed`, couleurs, `--caption-bottom`, `--no-caption`) |
+| Tableau | titre (caption, RGAA) au-dessus, en dessous ou masqué, taille, bordures, largeur des colonnes, couleur ; tableau de 3 × 3 inséré prêt à remplir (ligne d'en-tête comprise), lignes, colonnes, en-têtes et fusion par la barre qui apparaît dans le tableau ; accepté dans un accordéon, un onglet, un encadré ou une colonne | `fr-table` (`--bordered`, `--sm`/`--lg`, `--layout-fixed`, couleurs, `--caption-bottom`, `--no-caption`) |
 | Bandeau d'information | type (information, avertissement, alerte, vigilance météo, enlèvement, attentat, appel à témoins, cyberattaque), titre, description, lien, icône | `fr-notice` (non refermable dans un contenu ; sans icône pour les 3 types génériques seulement) |
 | Badge | libellé, type (état ou couleur), taille, icône des états | `fr-badge` ; toujours dans un groupe `fr-badges-group` |
 | Tag | libellé, lien facultatif (tag cliquable, couleur), taille, icône | `fr-tag` ; groupe `fr-tags-group` |
@@ -41,8 +42,8 @@ coller, y compris d'une colonne à l'autre.
 - **Dispositions** (`ComponentRegistry::COLUMN_LAYOUTS`) : 6+6, 4+8, 8+4, 3+9, 9+3, 5+7, 7+5, 4+4+4, 3+6+3, 6+3+3, 3+3+6,
   3+3+3+3. Sur téléphone, chaque colonne prend toute la largeur (`fr-col-12`), dans l'ordre du contenu ; à partir de la
   tablette (`fr-col-md-*`) ou de l'ordinateur seulement (`fr-col-lg-*`), elles se placent côte à côte.
-- **Contenu d'une colonne** : texte, titres, listes, médias et tous les composants (y compris accordéons, onglets,
-  encadrés), sauf un autre bloc « Colonnes ».
+- **Contenu d'une colonne** : texte, titres, listes, médias et tous les composants (accordéons, onglets, encadrés,
+  tableau, et même un autre bloc « Colonnes »). Un bloc « Colonnes » se place aussi dans un accordéon, un onglet…
 - **Changer de disposition** : des colonnes vides sont ajoutées ; le contenu des colonnes retirées est regroupé à la fin de
   la dernière colonne gardée (rien n'est perdu).
 - **Largeur minimale** (réglage `width` d'un composant, en colonnes de 12) : carte et tuile 3 par élément d'une ligne
@@ -123,8 +124,8 @@ accordéons, onglets). Une évolution du DSFR se fait dans les gabarits, sans to
 - L'éditeur reçoit **tous** les composants (`insertable` vaut `false` pour un composant retiré, ancien ou vidéo sans
   hôte) : un contenu qui en contient est relu et réenregistré sans perte.
 - Modèle CKEditor : `cmpAtom` (sans zone), `cmpBox` (zones `cmpSlotInline` / `cmpSlotBlock`), `cmpLayout` (colonnes
-  `cmpColumn`) ; le schéma interdit un composant à zones dans une zone et un bloc « Colonnes » dans une zone ou une
-  colonne.
+  `cmpColumn`) ; le schéma n'interdit un composant que dans un titre (`cmpSlotInline`) et dans une cellule de tableau,
+  et un tableau hors de la zone « tables » du composant Tableau.
 
 ## Modifier ou ajouter un composant (YAML)
 

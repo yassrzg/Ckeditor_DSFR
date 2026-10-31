@@ -92,8 +92,8 @@ vidéos désactivées (erreur journalisée).
   attribut libre) ; chaque réglage de composant est revalidé à l'affichage (listes de valeurs, adresses http(s)/mailto/
   tel/relatives, médias existants, icônes et pictogrammes du DSFR).
 - Contenu contrôlé à l'enregistrement (`ContentValidator`, par `EditorType`) : un envoi forgé (composant inconnu, valeur
-  hors liste, adresse `javascript:`, icône ou pictogramme hors DSFR, média inexistant ou du mauvais type, imbrication
-  interdite, nombre de colonnes incohérent) est refusé avec un message sur le champ.
+  hors liste, adresse `javascript:`, icône ou pictogramme hors DSFR, média inexistant ou du mauvais type, composant
+  dans un titre ou une cellule, tableau hors du composant Tableau, nombre de colonnes incohérent) est refusé avec un message sur le champ.
 - Vidéos : HTTPS et hôtes autorisés uniquement ; ajouter ces hôtes à `frame-src` (`content_security_policy: true`, ou
   politique du projet via `EditorSettings::videoHosts()`).
 - CSRF sur tous les formulaires et la suppression ; droits par `roles`.

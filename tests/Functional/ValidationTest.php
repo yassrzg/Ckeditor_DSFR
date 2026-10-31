@@ -30,7 +30,13 @@ final class ValidationTest extends FunctionalTestCase
             .'<div data-component="media-text" data-media-id="'.$image->getId().'"><div data-slot="body"><p>Ancien</p></div></div>'
             .'<div data-component="download" data-media-id="'.$guide->getId().'"></div>'
             .'<div data-component="download" data-media-ids="'.$guide->getId().'" data-variant="tile" data-media-ids-settings="'.htmlspecialchars('{"'.$guide->getId().'":{"pictogram":"system/warning","surface":"grey"}}').'"></div>'
-            .'<div data-component="table" data-caption="T"><div data-slot="body"><table><tbody><tr><td>1</td></tr></tbody></table></div></div>',
+            .'<div data-component="table" data-caption="T"><div data-slot="body"><table><tbody><tr><td>1</td></tr></tbody></table></div></div>'
+            // Tous les composants dans une zone de contenu : tableau, colonnes et accordéon dans un accordéon.
+            .'<div data-component="accordion"><div data-slot="title">Q</div><div data-slot="body">'
+            .'<div data-component="table" data-caption="T"><div data-slot="body"><table><tbody><tr><td>1</td></tr></tbody></table></div></div>'
+            .'<div data-component="columns" data-columns="4-8"><div data-slot="column"><div data-component="image" data-media-id="'.$image->getId().'"></div></div>'
+            .'<div data-slot="column"><div data-component="columns" data-columns="6-6"><div data-slot="column"><p>A</p></div><div data-slot="column"><p>B</p></div></div></div></div>'
+            .'<div data-component="accordion"><div data-slot="title">Q2</div><div data-slot="body"><p>R2</p></div></div></div></div>',
         ));
         self::assertSame([], $this->validator()->validate(null));
     }
@@ -47,7 +53,8 @@ final class ValidationTest extends FunctionalTestCase
             .'<div data-component="tile" data-title="t" data-pictogram="../../secret"></div>'
             .'<div data-component="image" data-media-id="999999"></div>'
             .'<div data-component="download" data-media-ids="'.$image->getId().'"></div>'
-            .'<div data-component="accordion"><div data-slot="title">Q</div><div data-slot="body"><div data-component="tab"><div data-slot="body"></div></div></div></div>'
+            .'<div data-component="accordion"><div data-slot="title">Q <div data-component="badge" data-label="B"></div></div><div data-slot="body"><p>R</p></div></div>'
+            .'<div data-component="table" data-caption="T"><div data-slot="body"><table><tbody><tr><td><div data-component="badge" data-label="B"></div></td></tr></tbody></table></div></div>'
             .'<table><tbody><tr><td>Hors composant</td></tr></tbody></table>'
             .'<div data-component="download" data-media-ids="'.$image->getId().'" data-media-ids-settings="{&quot;999&quot;:{&quot;surface&quot;:&quot;grey&quot;}}"></div>'
             .'<div data-component="columns" data-columns="6-6"><div data-slot="column">'
@@ -61,10 +68,9 @@ final class ValidationTest extends FunctionalTestCase
             '« Mise en avant » : valeur non autorisée pour « Icône ».',
             '« Mise en avant » : zone inconnue « pirate ».',
             '« Tuile » : valeur non autorisée pour « Pictogramme ».',
-            '« Onglet » ne peut pas être placé dans la zone d\'un autre composant.',
+            '« Badge » ne peut pas être placé dans un titre ni dans une cellule de tableau.',
             'Un tableau se place dans le composant « Tableau ».',
             '« Documents à télécharger » : réglages par média non valides pour « Documents ».',
-            'Un bloc « Colonnes » ne peut pas être placé dans une colonne ni dans un autre composant.',
             'Le bloc « Colonnes » doit contenir 2 colonnes, il en contient 1.',
             '« Image » : le média n° 999999 n\'existe pas, retirez-le du composant.',
             '« Documents à télécharger » : le média n° '.$image->getId().' n\'est pas un document.',

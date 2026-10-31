@@ -33,7 +33,7 @@
                                     <p class="fr-text--sm">Choisissez le composant à insérer à l’emplacement du curseur.</p>
                                     <ul class="cmp-chooser fr-raw-list">
                                         {%- for component in ckeditor_dsfr_components() %}
-                                            <li data-ckeditor-dsfr-target="choice" data-box="{{ component.hasSlots ? 1 : 0 }}" data-layout="{{ component.layout ? 1 : 0 }}">
+                                            <li>
                                                 <button type="button" class="cmp-chooser__item" data-action="ckeditor-dsfr#choose" data-ckeditor-dsfr-name-param="{{ component.name }}">
                                                     <span class="{{ component.icon }}" aria-hidden="true"></span>
                                                     <span><strong>{{ component.label }}</strong><span class="fr-hint-text">{{ component.description }}</span></span>

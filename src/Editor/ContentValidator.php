@@ -11,8 +11,9 @@ use Masterminds\HTML5;
 /**
  * Contrôle à l'enregistrement d'un contenu de l'éditeur (après ContentSanitizer), pour un envoi qui ne viendrait pas de
  * l'éditeur (requête forgée, HTML modifié à la main) : composants connus, valeurs des listes de choix, adresses,
- * icônes et pictogrammes du DSFR, médias existants et du bon type, réglages par média, imbrication (zones, colonnes,
- * tableaux dans le composant Tableau seulement) et nombre de colonnes.
+ * icônes et pictogrammes du DSFR, médias existants et du bon type, réglages par média, emplacements (tous les composants
+ * dans une zone de contenu ou une colonne, aucun dans un titre ni dans une cellule ; tableaux dans le composant Tableau
+ * seulement) et nombre de colonnes.
  * L'éditeur ne produit jamais ces erreurs ; le rendu (ContentRenderer) revalide de toute façon chaque valeur.
  */
 final class ContentValidator
@@ -38,7 +39,7 @@ final class ContentValidator
 
         $errors = [];
         $medias = [];
-        $this->walk($this->html5->loadHTMLFragment($html), 'root', false, $errors, $medias);
+        $this->walk($this->html5->loadHTMLFragment($html), 'content', false, $errors, $medias);
 
         $found = $this->mediaRepository->findByIds(array_keys($medias));
         foreach ($medias as $id => [$type, $label]) {
@@ -53,7 +54,7 @@ final class ContentValidator
     }
 
     /**
-     * @param 'root'|'slot'|'column'                     $context emplacement : contenu, zone d'un composant, colonne
+     * @param 'content'|'inline'|'cell'                  $context emplacement : contenu (texte, zone, colonne), titre, cellule de tableau
      * @param bool                                       $tables  zone qui accepte un tableau (composant Tableau)
      * @param list<string>                               $errors
      * @param array<int, array{0: MediaType, 1: string}> $medias médias cités (type attendu, composant)
@@ -65,8 +66,12 @@ final class ContentValidator
                 continue;
             }
             if (!$node->hasAttribute('data-component')) {
-                if ('table' === $node->nodeName && !$tables) {
-                    $errors[] = 'Un tableau se place dans le composant « Tableau ».';
+                if ('table' === $node->nodeName) {
+                    if ($tables) {
+                        $this->walk($node, 'cell', false, $errors, $medias);
+                    } else {
+                        $errors[] = 'Un tableau se place dans le composant « Tableau ».';
+                    }
                     continue;
                 }
                 $this->walk($node, $context, $tables, $errors, $medias);
@@ -79,11 +84,9 @@ final class ContentValidator
                 $errors[] = \sprintf('Composant inconnu : « %s ».', $name);
                 continue;
             }
-            $label = $definition->label;
-            if ($definition->layout && 'root' !== $context) {
-                $errors[] = \sprintf('Un bloc « %s » ne peut pas être placé dans une colonne ni dans un autre composant.', $label);
-            } elseif ($definition->hasSlots() && 'slot' === $context) {
-                $errors[] = \sprintf('« %s » ne peut pas être placé dans la zone d\'un autre composant.', $label);
+            if ('content' !== $context) {
+                $errors[] = \sprintf('« %s » ne peut pas être placé dans un titre ni dans une cellule de tableau.', $definition->label);
+                continue;
             }
             $this->checkFields($definition, $node, $errors, $medias);
             $this->checkSlots($definition, $node, $errors, $medias);
@@ -188,11 +191,9 @@ final class ContentValidator
                 continue;
             }
             $columns += (int) $definition->layout;
-            $tables = false;
-            foreach ($definition->slots as $slot) {
-                $tables = $tables || ($slot['name'] === $child->getAttribute('data-slot') && ($slot['tables'] ?? false));
-            }
-            $this->walk($child, $definition->layout ? 'column' : 'slot', $tables, $errors, $medias);
+            // Zone d'un titre (sur une ligne) : aucun composant ; zone « tables » : un tableau.
+            $slot = array_values(array_filter($definition->slots, static fn (array $s): bool => $s['name'] === $child->getAttribute('data-slot')))[0];
+            $this->walk($child, $slot['inline'] ? 'inline' : 'content', $slot['tables'] ?? false, $errors, $medias);
         }
 
         if ($definition->layout) {
