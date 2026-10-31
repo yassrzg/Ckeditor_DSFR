@@ -2,7 +2,7 @@
 {% import '@CkeditorDsfr/admin/_macros.html.twig' as ui %}
 {% form_theme form '@CkeditorDsfr/form/fields.html.twig' %}
 
-{% set title = media.id ? 'Modifier ' ~ (media.image ? 'l’image' : 'le document') : 'Ajouter ' ~ (media.image ? 'une image' : 'un document') %}
+{% set title = media.id ? 'Modifier ' ~ media.type.withDefiniteArticle : 'Ajouter ' ~ media.type.withArticle %}
 {% block ckeditor_dsfr_title %}Médiathèque - {{ title }}{% endblock %}
 
 {% block ckeditor_dsfr_content %}
@@ -23,6 +23,10 @@
                 <h2 class="fr-h5">Fichier actuel</h2>
                 {% if media.image %}
                     <img class="fr-responsive-img cmp-media-preview" src="{{ path('ckeditor_dsfr_media_show', {id: media.id}) }}" alt="Aperçu : {{ media.altText ?: media.title }}">
+                {% elseif media.type.value == 'video' %}
+                    <video class="fr-responsive-vid cmp-media-preview" controls preload="metadata" aria-label="Aperçu : {{ media.title }}">
+                        <source src="{{ path('ckeditor_dsfr_media_show', {id: media.id}) }}" type="{{ media.mimeType }}">
+                    </video>
                 {% endif %}
                 <p class="fr-text--sm fr-mt-2v">{{ media.originalName }} — {{ media.detail }}{% if media.width %} · {{ media.width }}×{{ media.height }} pixels{% endif %}</p>
                 <p><a class="fr-link fr-link--download" download href="{{ path('ckeditor_dsfr_media_download', {id: media.id}) }}">Télécharger <span class="fr-link__detail">{{ media.detail }}</span></a></p>

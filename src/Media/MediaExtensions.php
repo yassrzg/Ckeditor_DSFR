@@ -16,8 +16,11 @@ final class MediaExtensions
 
     public const array DOCUMENT_CATALOG = [
         'pdf', 'odt', 'ods', 'odp', 'odg', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv', 'txt', 'rtf',
-        'zip', '7z', 'gz', 'tar', 'json', 'epub', 'mp3', 'mp4', 'webm',
+        'zip', '7z', 'gz', 'tar', 'json', 'epub', 'mp3', 'mp4', 'webm', 'vtt',
     ];
+
+    /** Vidéos lues par le lecteur du navigateur (composant « Vidéo », fichier envoyé). */
+    public const array VIDEO_CATALOG = ['mp4', 'webm', 'ogv'];
 
     /** Formats jamais acceptés (exécution sur le serveur ou dans le navigateur). */
     public const array FORBIDDEN = [

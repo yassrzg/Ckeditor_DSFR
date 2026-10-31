@@ -30,6 +30,8 @@ import { createComponentsPlugin } from './components_plugin.js';
 const SAFE_URL = /^(https?:\/\/|mailto:|tel:|\/(?!\/))/i;
 const LIBRARY_LIMIT = 200;
 const NOTICE_DELAY = 10000;
+// Catégories de la médiathèque (MediaType côté PHP).
+const MEDIA_TYPES = ['image', 'document', 'video'];
 
 export default class extends Controller {
     static targets = [
@@ -40,7 +42,7 @@ export default class extends Controller {
 
     async connect() {
         this.definitions = new Map(this.componentsValue.map((definition) => [definition.name, definition]));
-        this.media = { image: new Map(), document: new Map(), icon: new Map(), pictogram: new Map() };
+        this.media = { image: new Map(), document: new Map(), video: new Map(), icon: new Map(), pictogram: new Map() };
         this.openItems = new Set();
         const Components = createComponentsPlugin(this.componentsValue, {
             open: (options) => this.open(options),
@@ -86,7 +88,7 @@ export default class extends Controller {
         this.beforeCache = () => this.destroy();
         document.addEventListener('turbo:before-cache', this.beforeCache);
 
-        await this.loadMedia(['image', 'document']);
+        await this.loadMedia(MEDIA_TYPES);
         this.editor?.plugins.get('DsfrComponents').refreshPreviews();
     }
 
@@ -156,7 +158,7 @@ export default class extends Controller {
         this.backTarget.hidden = true;
         this.showDialog();
 
-        await this.loadMedia(['image', 'document', 'icon', 'pictogram']);
+        await this.loadMedia([...MEDIA_TYPES, 'icon', 'pictogram']);
         if ('edit' === mode) this.showPanel(name, values);
     }
 
@@ -194,6 +196,7 @@ export default class extends Controller {
             if (settings) settings.value = values[field.settingsAttribute] ?? '';
             this.setError(input, '');
             if (this.isMedia(field)) this.renderMediaField(input);
+            if (field.offered) this.restrictOptions(input, field.offered, values[field.attribute]);
         });
 
         this.applyConditions(name);
@@ -201,6 +204,14 @@ export default class extends Controller {
         this.submitTarget.hidden = false;
         this.backTarget.hidden = 'edit' === this.dialogState.mode;
         this.focusable(panel.querySelector('[data-field]'))?.focus();
+    }
+
+    // Valeurs proposées par les réglages de l'administrateur (ex. sources d'une vidéo) : une valeur déjà enregistrée
+    // reste choisie ; une seule valeur possible : réglage masqué (sa valeur reste enregistrée).
+    restrictOptions(input, offered, current) {
+        if (undefined === current && !offered.includes(input.value)) input.value = offered[0] ?? input.value;
+        [...input.options].forEach((option) => { option.hidden = option.disabled = !offered.includes(option.value) && option.value !== current; });
+        input.closest('.fr-fieldset__element').classList.toggle('cmp-field--single', [...input.options].filter((option) => !option.disabled).length < 2);
     }
 
     isMedia(field) {
@@ -339,7 +350,7 @@ export default class extends Controller {
     async loadMedia(types) {
         const artwork = types.some((type) => 'icon' === type || 'pictogram' === type);
         await Promise.all([
-            ...types.filter((type) => 'image' === type || 'document' === type).map(async (type) => {
+            ...types.filter((type) => MEDIA_TYPES.includes(type)).map(async (type) => {
                 const list = await this.fetchJson(this.mediaUrlValue.replace('__TYPE__', type));
                 if (list) this.media[type] = new Map(list.map((media) => [String(media.id), media]));
             }),
@@ -550,7 +561,8 @@ export default class extends Controller {
             });
             return svg;
         }
-        return Object.assign(document.createElement('span'), { className: `cmp-media__icon ${'image' === type ? 'fr-icon-image-line' : 'fr-icon-file-text-line'}`, ariaHidden: 'true' });
+        const icon = { image: 'fr-icon-image-line', video: 'fr-icon-film-line' }[type] ?? 'fr-icon-file-text-line';
+        return Object.assign(document.createElement('span'), { className: `cmp-media__icon ${icon}`, ariaHidden: 'true' });
     }
 
     mediaButton(label, icon, title, action, direction = 0, disabled = false) {
@@ -602,22 +614,25 @@ export default class extends Controller {
     async openLibrary({ params: { field, item = null, setting = null } }) {
         const panel = this.panelFor(this.dialogState.name);
         const input = panel.querySelector(`[data-field="${field}"]`);
-        let { mediaType: type, multiple } = input.closest('[data-field-group]').querySelector('[data-media-field]').dataset;
+        let { mediaType: type, multiple, formats } = input.closest('[data-field-group]').querySelector('[data-media-field]').dataset;
+        formats = (formats ?? '').split(',').filter(Boolean);
         let selected = input.value.split(',').filter(Boolean);
         if (null !== item) {
             // Réglage d'un média (icône ou pictogramme) : un seul choix, enregistré dans ses réglages.
             item = String(item);
             type = this.fieldOf(input).items.find((itemField) => itemField.name === setting).type;
             multiple = '0';
+            formats = [];
             const current = this.readSettings(input)[item]?.[setting];
             selected = current ? [current] : [];
         }
-        this.libraryState = { input, item, setting, type, multiple: '1' === multiple, selected, title: this.titleTarget.textContent };
+        this.libraryState = { input, item, setting, type, formats, multiple: '1' === multiple, selected, title: this.titleTarget.textContent };
 
         panel.hidden = true;
         this.footerTarget.hidden = true;
         this.libraryTarget.hidden = false;
-        this.titleTarget.textContent = { image: 'Médiathèque : images', document: 'Médiathèque : documents', icon: 'Icônes du DSFR', pictogram: 'Pictogrammes du DSFR' }[type];
+        this.titleTarget.textContent = { image: 'Médiathèque : images', document: 'Médiathèque : documents', video: 'Médiathèque : vidéos', icon: 'Icônes du DSFR', pictogram: 'Pictogrammes du DSFR' }[type]
+            + (formats.length ? ` (${formats.join(', ').toUpperCase()})` : '');
         // Icônes et pictogrammes : liste du DSFR, pas d'ajout.
         this.libraryAddButtonTarget.hidden = 'icon' === type || 'pictogram' === type;
         this.librarySearchTarget.value = '';
@@ -627,10 +642,12 @@ export default class extends Controller {
     }
 
     renderLibrary() {
-        const { type, multiple, selected } = this.libraryState;
+        const { type, formats, multiple, selected } = this.libraryState;
         const plain = (text) => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
         const term = plain(this.librarySearchTarget.value.trim());
-        const found = [...this.media[type].values()].filter((media) => !term || plain(`${media.title} ${media.detail}`).includes(term));
+        // Formats limités par le réglage (ex. sous-titres : VTT seulement).
+        const found = [...this.media[type].values()].filter((media) => (!formats.length || formats.includes(String(media.format).toLowerCase()))
+            && (!term || plain(`${media.title} ${media.detail}`).includes(term)));
         // Plus de 1 000 icônes : affichage limité, la recherche affine.
         const medias = found.slice(0, LIBRARY_LIMIT);
         const name = `${this.dialogTarget.id}-library-choice`;

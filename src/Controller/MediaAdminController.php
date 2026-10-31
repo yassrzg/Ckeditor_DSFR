@@ -181,6 +181,7 @@ final class MediaAdminController extends AbstractEditorController
             'id' => $media->getId(),
             'title' => $media->getTitle(),
             'detail' => $media->getDetail(),
+            'format' => $media->getFormat(),
             'url' => $this->generateUrl('ckeditor_dsfr_media_show', ['id' => $media->getId()]),
         ];
     }

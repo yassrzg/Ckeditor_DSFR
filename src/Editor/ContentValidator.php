@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Yassrzg\CkeditorDsfrBundle\Editor;
 
-use Yassrzg\CkeditorDsfrBundle\Enum\MediaType;
 use Yassrzg\CkeditorDsfrBundle\Repository\MediaRepository;
 use Masterminds\HTML5;
 
@@ -41,12 +40,14 @@ final class ContentValidator
         $medias = [];
         $this->walk($this->html5->loadHTMLFragment($html), 'content', false, $errors, $medias);
 
-        $found = $this->mediaRepository->findByIds(array_keys($medias));
-        foreach ($medias as $id => [$type, $label]) {
+        $found = $this->mediaRepository->findByIds(array_values(array_unique(array_column($medias, 0))));
+        foreach ($medias as [$id, $field, $label]) {
             if (!isset($found[$id])) {
                 $errors[] = \sprintf('« %s » : le média n° %d n\'existe pas, retirez-le du composant.', $label, $id);
-            } elseif ($found[$id]->getType() !== $type) {
-                $errors[] = \sprintf('« %s » : le média n° %d n\'est pas %s.', $label, $id, MediaType::IMAGE === $type ? 'une image' : 'un document');
+            } elseif ($found[$id]->getType() !== $field->mediaType) {
+                $errors[] = \sprintf('« %s » : le média n° %d n\'est pas %s.', $label, $id, $field->mediaType?->withArticle());
+            } elseif (!$field->accepts($found[$id])) {
+                $errors[] = \sprintf('« %s » : « %s » doit être au format %s.', $label, $field->label, strtoupper(implode(', ', $field->formats)));
             }
         }
 
@@ -57,7 +58,7 @@ final class ContentValidator
      * @param 'content'|'inline'|'cell'                  $context emplacement : contenu (texte, zone, colonne), titre, cellule de tableau
      * @param bool                                       $tables  zone qui accepte un tableau (composant Tableau)
      * @param list<string>                               $errors
-     * @param array<int, array{0: MediaType, 1: string}> $medias médias cités (type attendu, composant)
+     * @param list<array{0: int, 1: ComponentField, 2: string}> $medias médias cités (identifiant, réglage, composant)
      */
     private function walk(\DOMNode $parent, string $context, bool $tables, array &$errors, array &$medias): void
     {
@@ -95,7 +96,7 @@ final class ContentValidator
 
     /**
      * @param list<string>                               $errors
-     * @param array<int, array{0: MediaType, 1: string}> $medias
+     * @param list<array{0: int, 1: ComponentField, 2: string}> $medias
      */
     private function checkFields(ComponentDefinition $definition, \DOMElement $node, array &$errors, array &$medias): void
     {
@@ -123,7 +124,7 @@ final class ContentValidator
             }
             if (null !== $field->mediaType && \in_array($field->type, ['media', 'medias'], true)) {
                 foreach (explode(',', $raw) as $id) {
-                    $medias[(int) $id] = [$field->mediaType, $definition->label];
+                    $medias[] = [(int) $id, $field, $definition->label];
                 }
             }
             if ([] !== $field->items && '' !== $node->getAttribute($field->settingsAttribute())) {
@@ -176,7 +177,7 @@ final class ContentValidator
 
     /**
      * @param list<string>                               $errors
-     * @param array<int, array{0: MediaType, 1: string}> $medias
+     * @param list<array{0: int, 1: ComponentField, 2: string}> $medias
      */
     private function checkSlots(ComponentDefinition $definition, \DOMElement $node, array &$errors, array &$medias): void
     {

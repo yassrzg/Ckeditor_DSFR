@@ -34,7 +34,7 @@ coller, y compris d'une colonne à l'autre.
 | Mise en exergue | couleur, contenu | `fr-highlight` |
 | Alerte | type, titre facultatif, contenu | `fr-alert` (compacte sans titre) |
 | Citation | contenu, auteur, source et son lien, précisions, image, couleur | `fr-quote` ; avec image : `fr-quote--column` (seule disposition prévue par le DSFR) |
-| Vidéo | adresse, titre, légende, transcription | Lecteur 16:9 et transcription (RGAA) ; plateformes autorisées seulement |
+| Vidéo | source (lien ou fichier), adresse ou fichier vidéo, sous-titres (.vtt) et image d'aperçu, titre, légende, transcription | Lecteur 16:9 et transcription (RGAA) : lecteur de la plateforme (autorisée seulement) ou lecteur du navigateur avec sous-titres |
 | *Image et texte* (ancien) | image, position, largeur, format, légende ; texte | Toujours affiché et modifiable, plus proposé : remplacé par « Colonnes » |
 
 ### Bloc « Colonnes »
@@ -165,6 +165,10 @@ components:
   `url`, `choice`, `media`, `medias` (`required: false` sinon).
 - Conditions : `when` (valeur parmi une liste), `when_filled` (l'un des réglages renseigné), `when_empty`, et
   `option_when` pour une valeur d'une liste. Un réglage masqué n'est pas enregistré.
+- `media_type` : `image`, `document` ou `video` ; `formats` limite un réglage `media` à certains formats (ex.
+  `formats: [vtt]` pour des sous-titres : médiathèque filtrée, contrôle à l'enregistrement et à l'affichage). Un
+  composant peut avoir plusieurs réglages `media` (nommés `…media-id` pour la protection des médias utilisés).
+- `category` : rubrique du composant dans la page des réglages (ex. « Médias », « Mise en page »).
 - Les valeurs `yes`, `no`, `true`… s'écrivent entre guillemets (sinon lues comme des booléens par YAML).
 - `{video_hosts}` dans une aide affiche les plateformes vidéo autorisées.
 

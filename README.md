@@ -13,7 +13,9 @@ composants proposés).
   ajoute, remplace ou retire des composants par ses propres fichiers YAML.
 - Le contenu est enregistré en HTML simple (`<div data-component="card" data-title="…">`), jamais en code DSFR : le rendu
   DSFR est produit à l'affichage, une évolution du DSFR ne touche pas aux contenus.
-- Médiathèque : images et documents, ajout depuis l'éditeur, choix par grille, ordre par glisser-déposer, protection des
+- Vidéo par lien (plateformes autorisées) ou par fichier envoyé (lecteur du navigateur, sous-titres .vtt, image
+  d'aperçu) : sources choisies par l'administrateur.
+- Médiathèque : images, documents et vidéos, ajout depuis l'éditeur, choix par grille, ordre par glisser-déposer, protection des
   médias utilisés.
 - Sécurité : HTML filtré à l'enregistrement et à l'affichage, réglages revalidés, formats exécutables toujours refusés,
   CSRF, droits configurables.

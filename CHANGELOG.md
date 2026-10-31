@@ -23,6 +23,12 @@
 - Contrôle à l'enregistrement (`ContentValidator`) ; orientation des cartes et tuiles proposée seulement quand elle a un
   effet, tuile de téléchargement verticale (`fr-tile--vertical@md`).
 - Namespace `Yassrzg\CkeditorDsfrBundle`, paquet `yassrzg/ckeditor-dsfr-bundle`.
+- **Vidéos envoyées** : catégorie « Vidéos » de la médiathèque (formats, poids, dossier `video` sous `storage_root`) ;
+  composant Vidéo par lien ou par fichier (lecteur du navigateur, sous-titres VTT, image d'aperçu), sources proposées
+  choisies dans les réglages (`defaults.video_sources`, `link` par défaut) ; fichiers vidéo servis par morceaux.
+- Catalogue : `media_type: video`, `formats` (formats acceptés d'un média), `category` (rubrique des réglages).
+- Page des réglages réorganisée : sommaire latéral, résumé, composants par catégorie, réglages des vidéos affichés
+  selon les sources cochées, bouton d'enregistrement toujours visible.
 
 ## 1.0.0 — 2026-10-28
 

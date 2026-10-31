@@ -15,7 +15,7 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 
 /**
  * Fichiers de la médiathèque : <ckeditor_dsfr.storage_root>/<dossier de la catégorie>/<nom généré>, le dossier de
- * chaque catégorie étant choisi par l'administrateur (EditorSettings::directory(), image et document par défaut).
+ * chaque catégorie étant choisi par l'administrateur (EditorSettings::directory(), image, document et video par défaut).
  * Les fichiers sont servis par MediaController (droits de ckeditor_dsfr.roles.view).
  */
 final readonly class MediaStorage
@@ -34,8 +34,22 @@ final readonly class MediaStorage
     /** Extension réelle (déduite du contenu) autorisée par l'administrateur pour cette catégorie. */
     public function isAllowed(UploadedFile $file, MediaType $type): bool
     {
-        return \UPLOAD_ERR_OK === $file->getError()
-            && \in_array(strtolower((string) $file->guessExtension()), $this->settings->extensions($type), true);
+        return \UPLOAD_ERR_OK === $file->getError() && \in_array(self::extension($file), $this->settings->extensions($type), true);
+    }
+
+    /**
+     * Extension déduite du contenu du fichier. Sous-titres WebVTT : texte brut pour la détection, reconnus à leur
+     * en-tête « WEBVTT » (exigé par le format) et à leur nom .vtt.
+     */
+    public static function extension(UploadedFile $file): string
+    {
+        $extension = strtolower((string) $file->guessExtension());
+        if ('txt' === $extension && 'vtt' === strtolower($file->getClientOriginalExtension())
+            && 1 === preg_match('/^(\xEF\xBB\xBF)?WEBVTT([ \t\r\n]|$)/', (string) @file_get_contents($file->getPathname(), length: 16))) {
+            return 'vtt';
+        }
+
+        return $extension;
     }
 
     /**
@@ -46,9 +60,9 @@ final readonly class MediaStorage
     public function store(UploadedFile $file, Media $media): void
     {
         $name = $this->slugger->slug(pathinfo($file->getClientOriginalName(), \PATHINFO_FILENAME))->lower()->toString() ?: 'fichier';
-        $filename = \sprintf('%s-%s.%s', mb_substr($name, 0, 150), uniqid(), strtolower((string) $file->guessExtension()));
+        $filename = \sprintf('%s-%s.%s', mb_substr($name, 0, 150), uniqid(), self::extension($file));
         $originalName = $file->getClientOriginalName();
-        $mimeType = (string) $file->getMimeType();
+        $mimeType = 'vtt' === self::extension($file) ? 'text/vtt' : (string) $file->getMimeType();
         $size = (int) $file->getSize();
         // Dimensions lues sans bibliothèque d'image (getimagesize) : utiles au navigateur pour réserver la place.
         $dimensions = $media->isImage() ? @getimagesize($file->getPathname()) : false;

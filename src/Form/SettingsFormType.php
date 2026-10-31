@@ -21,8 +21,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
- * Réglages de l'éditeur (administrateur) : composants proposés, hôtes des lecteurs vidéo, formats, poids maximal
- * et dossier de stockage des images et des documents. Données : tableau au format de EditorSettings::save() (hôtes en texte).
+ * Réglages de l'éditeur (administrateur) : composants proposés (par catégorie), sources des vidéos et plateformes
+ * autorisées, formats, poids maximal et dossier de stockage de chaque catégorie de médias (images, documents, vidéos).
+ * Données : tableau au format de EditorSettings::save() (hôtes en texte).
  *
  * @extends AbstractType<array<string, mixed>>
  */
@@ -36,17 +37,32 @@ final class SettingsFormType extends AbstractType
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        // Composants regroupés par catégorie (clé « category » du catalogue YAML), dans l'ordre du catalogue.
         $components = [];
         foreach ($this->registry->selectable() as $definition) {
-            $components[$definition->label] = $definition->name;
+            $components[$definition->category ?? 'Autres composants'][$definition->label] = $definition->name;
         }
 
         $builder->add('enabled_components', ChoiceType::class, [
             'label' => 'Composants proposés dans l\'éditeur',
-            'help' => 'Un composant décoché n\'est plus proposé ; les contenus qui l\'utilisent déjà restent affichés. '
-                .'La vidéo n\'est proposée que si au moins une plateforme est autorisée.',
+            'help' => 'Un composant décoché n\'est plus proposé ; les contenus qui l\'utilisent déjà restent affichés.',
             'choices' => $components,
-            'choice_attr' => fn (string $name): array => ['data-description' => $this->registry->selectable()[$name]->description],
+            'choice_attr' => fn (string $name): array => [
+                'data-description' => $this->registry->selectable()[$name]->description,
+                'data-category' => $this->registry->selectable()[$name]->category ?? 'Autres composants',
+            ],
+            'expanded' => true,
+            'multiple' => true,
+            'required' => false,
+        ]);
+
+        $builder->add('video_sources', ChoiceType::class, [
+            'label' => 'Vidéos proposées au rédacteur',
+            'help' => 'Aucune case cochée : le composant « Vidéo » n\'est plus proposé (les vidéos déjà insérées restent affichées).',
+            'choices' => ['Lien vers une plateforme vidéo' => EditorSettings::VIDEO_LINK, 'Fichier vidéo envoyé dans la médiathèque' => EditorSettings::VIDEO_UPLOAD],
+            'choice_attr' => static fn (string $source): array => ['data-description' => EditorSettings::VIDEO_LINK === $source
+                ? 'Adresse d\'une vidéo hébergée sur une des plateformes autorisées ci-dessous.'
+                : 'Fichier lu par le lecteur du navigateur, avec sous-titres et image d\'aperçu facultatifs.'],
             'expanded' => true,
             'multiple' => true,
             'required' => false,
@@ -55,7 +71,7 @@ final class SettingsFormType extends AbstractType
         $builder->add('video_hosts', TextareaType::class, [
             'label' => 'Plateformes vidéo autorisées',
             'help' => 'Un hôte par ligne : celui du lecteur intégré (ex. www.youtube.com, www.dailymotion.com, player.vimeo.com, '
-                .'ou la plateforme vidéo interne). Vide : le composant « Vidéo » n\'est plus proposé et les vidéos ne sont plus affichées.',
+                .'ou la plateforme vidéo interne). Vide : aucune vidéo par lien n\'est proposée ni affichée.',
             'required' => false,
             'attr' => ['rows' => 5, 'spellcheck' => 'false'],
             'constraints' => [new Assert\Callback(static function (?string $value, ExecutionContextInterface $context): void {
@@ -70,8 +86,9 @@ final class SettingsFormType extends AbstractType
         foreach (MediaType::cases() as $type) {
             $catalog = $this->settings->catalog($type);
             $builder->add($type->value.'_extensions', ChoiceType::class, [
-                'label' => MediaType::IMAGE === $type ? 'Formats d\'image acceptés' : 'Formats de document acceptés',
-                'help' => 'Le format est vérifié d\'après le contenu du fichier, pas d\'après son nom.',
+                'label' => 'Formats acceptés',
+                'help' => 'Le format est vérifié d\'après le contenu du fichier, pas d\'après son nom.'
+                    .(MediaType::DOCUMENT === $type ? ' VTT : sous-titres des vidéos envoyées.' : ''),
                 'choices' => array_combine(array_map('strtoupper', $catalog), $catalog),
                 'expanded' => true,
                 'multiple' => true,
@@ -79,13 +96,13 @@ final class SettingsFormType extends AbstractType
                 'constraints' => [new Assert\Count(min: 1, minMessage: 'Choisissez au moins un format.')],
             ]);
             $builder->add($type->value.'_max_size', IntegerType::class, [
-                'label' => MediaType::IMAGE === $type ? 'Poids maximal d\'une image (Mo)' : 'Poids maximal d\'un document (Mo)',
-                'help' => \sprintf('Entre 1 et %d Mo. Le serveur doit aussi accepter ce poids (upload_max_filesize de PHP : %s).', $limit, \ini_get('upload_max_filesize') ?: '?'),
+                'label' => 'Poids maximal d\'un fichier (Mo)',
+                'help' => \sprintf('Entre 1 et %d Mo. Le serveur doit aussi accepter ce poids (PHP : %s par fichier, %s par envoi).', $limit, \ini_get('upload_max_filesize') ?: '?', \ini_get('post_max_size') ?: '?'),
                 'attr' => ['min' => 1, 'max' => $limit],
                 'constraints' => [new Assert\NotBlank(), new Assert\Range(min: 1, max: $limit)],
             ]);
             $builder->add($type->value.'_directory', TextType::class, [
-                'label' => MediaType::IMAGE === $type ? 'Dossier des images' : 'Dossier des documents',
+                'label' => 'Dossier de stockage',
                 'help' => 'Sous-dossier du dossier racine de la médiathèque (fixé par la configuration du site), ex. « contenu/'.$type->value.'s » : '
                     .'lettres, chiffres, - et _, séparés par /. Un changement déplace les fichiers existants.',
                 'attr' => ['maxlength' => 200, 'spellcheck' => 'false', 'autocomplete' => 'off'],
@@ -101,8 +118,9 @@ final class SettingsFormType extends AbstractType
             static function (?array $data): ?array {
                 // Deux catégories dans le même dossier : les noms générés restent uniques, mais le déplacement d'une
                 // catégorie emporterait les fichiers de l'autre.
-                if (null !== $data && MediaDirectories::normalize($data['image_directory'] ?? '') === MediaDirectories::normalize($data['document_directory'] ?? '')) {
-                    throw new TransformationFailedException('Même dossier', invalidMessage: 'Les images et les documents doivent être dans des dossiers différents.');
+                $directories = array_map(static fn (MediaType $type): ?string => MediaDirectories::normalize($data[$type->value.'_directory'] ?? ''), MediaType::cases());
+                if (null !== $data && \count($directories) !== \count(array_unique($directories))) {
+                    throw new TransformationFailedException('Même dossier', invalidMessage: 'Les images, les documents et les vidéos doivent être dans des dossiers différents.');
                 }
 
                 return $data;
@@ -127,16 +145,18 @@ final class SettingsFormType extends AbstractType
      */
     public static function dataFrom(EditorSettings $settings, ComponentRegistry $registry): array
     {
-        return [
+        $data = [
             'enabled_components' => array_values(array_diff(array_keys($registry->selectable()), $settings->disabledComponents())),
+            'video_sources' => $settings->videoSources(),
             'video_hosts' => implode("\n", $settings->videoHosts()),
-            'image_extensions' => $settings->extensions(MediaType::IMAGE),
-            'image_max_size' => $settings->maxSize(MediaType::IMAGE),
-            'document_extensions' => $settings->extensions(MediaType::DOCUMENT),
-            'document_max_size' => $settings->maxSize(MediaType::DOCUMENT),
-            'image_directory' => $settings->directory(MediaType::IMAGE),
-            'document_directory' => $settings->directory(MediaType::DOCUMENT),
         ];
+        foreach (MediaType::cases() as $type) {
+            $data[$type->value.'_extensions'] = $settings->extensions($type);
+            $data[$type->value.'_max_size'] = $settings->maxSize($type);
+            $data[$type->value.'_directory'] = $settings->directory($type);
+        }
+
+        return $data;
     }
 
     /**
@@ -144,19 +164,21 @@ final class SettingsFormType extends AbstractType
      *
      * @param array<string, mixed> $data
      *
-     * @return array{video_hosts: list<string>, image_extensions: list<string>, document_extensions: list<string>, image_max_size: int, document_max_size: int, disabled_components: list<string>, image_directory: string, document_directory: string}
+     * @return array<string, mixed>
      */
     public static function toSettings(array $data, ComponentRegistry $registry): array
     {
-        return [
+        $settings = [
+            'video_sources' => array_values(array_intersect(EditorSettings::VIDEO_SOURCE_CHOICES, $data['video_sources'] ?? [])),
             'video_hosts' => EditorSettings::parseHosts((string) $data['video_hosts'])['hosts'],
-            'image_extensions' => array_values($data['image_extensions']),
-            'document_extensions' => array_values($data['document_extensions']),
-            'image_max_size' => (int) $data['image_max_size'],
-            'document_max_size' => (int) $data['document_max_size'],
             'disabled_components' => array_values(array_diff(array_keys($registry->selectable()), $data['enabled_components'] ?? [])),
-            'image_directory' => (string) MediaDirectories::normalize($data['image_directory']),
-            'document_directory' => (string) MediaDirectories::normalize($data['document_directory']),
         ];
+        foreach (MediaType::cases() as $type) {
+            $settings[$type->value.'_extensions'] = array_values($data[$type->value.'_extensions']);
+            $settings[$type->value.'_max_size'] = (int) $data[$type->value.'_max_size'];
+            $settings[$type->value.'_directory'] = (string) MediaDirectories::normalize($data[$type->value.'_directory']);
+        }
+
+        return $settings;
     }
 }

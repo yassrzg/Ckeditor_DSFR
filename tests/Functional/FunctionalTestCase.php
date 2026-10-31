@@ -6,7 +6,9 @@ namespace Yassrzg\CkeditorDsfrBundle\Tests\Functional;
 
 use Yassrzg\CkeditorDsfrBundle\Entity\Media;
 use Yassrzg\CkeditorDsfrBundle\Enum\MediaType;
+use Yassrzg\CkeditorDsfrBundle\Form\SettingsFormType;
 use Yassrzg\CkeditorDsfrBundle\Media\MediaStorage;
+use Yassrzg\CkeditorDsfrBundle\Settings\EditorSettings;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -33,6 +35,19 @@ abstract class FunctionalTestCase extends WebTestCase
         $tool->dropSchema($metadata);
         $tool->createSchema($metadata);
         (new Filesystem())->remove(static::getContainer()->getParameter('ckeditor_dsfr.storage_root'));
+    }
+
+    /**
+     * Enregistre des réglages de l'éditeur : valeurs en vigueur, remplacées par $values (même format que EditorSettings::save()).
+     *
+     * @param array<string, mixed> $values
+     */
+    protected function saveSettings(array $values): void
+    {
+        $settings = static::getContainer()->get(EditorSettings::class);
+        $registry = static::getContainer()->get('ckeditor_dsfr.component_registry');
+        $settings->save([...SettingsFormType::toSettings(SettingsFormType::dataFrom($settings, $registry), $registry), ...$values]);
+        $registry->reset();
     }
 
     /**

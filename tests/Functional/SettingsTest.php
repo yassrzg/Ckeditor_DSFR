@@ -69,12 +69,23 @@ final class SettingsTest extends FunctionalTestCase
         self::assertSame("default-src 'self'; frame-src 'self' https://www.youtube.com https://player.vimeo.com", $policy);
     }
 
+    public function testVideoIsOfferedForTheAllowedSources(): void
+    {
+        $registry = static::getContainer()->get('ckeditor_dsfr.component_registry');
+        $this->saveSettings(['video_sources' => ['link', 'upload'], 'video_hosts' => []]);
+        self::assertArrayHasKey('video', $registry->all(), 'Fichier envoyé : proposé sans plateforme autorisée.');
+        $source = array_column(array_column($registry->forEditor(), 'fields', 'name')['video'], null, 'name')['source'];
+        self::assertSame(['upload'], $source['offered'], 'Lien sans plateforme : non proposé.');
+
+        $this->saveSettings(['video_sources' => ['link'], 'video_hosts' => []]);
+        self::assertArrayNotHasKey('video', $registry->all());
+        $this->saveSettings(['video_sources' => [], 'video_hosts' => ['www.youtube.com']]);
+        self::assertArrayNotHasKey('video', $registry->all(), 'Aucune source cochée.');
+    }
+
     public function testEditorFieldOffersOnlyEnabledComponents(): void
     {
-        static::getContainer()->get(EditorSettings::class)->save([
-            'video_hosts' => [], 'image_extensions' => ['png'], 'document_extensions' => ['pdf'], 'image_max_size' => 10,
-            'document_max_size' => 50, 'disabled_components' => ['tab', 'quote'], 'image_directory' => 'image', 'document_directory' => 'document',
-        ]);
+        $this->saveSettings(['video_hosts' => [], 'image_extensions' => ['png'], 'document_extensions' => ['pdf'], 'disabled_components' => ['tab', 'quote']]);
         $form = static::getContainer()->get('form.factory')->createNamedBuilder('page', options: ['csrf_protection' => false])
             ->add('content', EditorType::class, ['label' => 'Contenu', 'data' => "Ancien texte\n\nsimple"])->getForm();
         $html = static::getContainer()->get('twig')->createTemplate('{{ form_widget(form) }}')->render(['form' => $form->createView()]);
@@ -115,7 +126,7 @@ final class SettingsTest extends FunctionalTestCase
         self::assertSelectorTextContains('main', 'Dossier non valide');
         $this->submit(['image_directory' => 'commun', 'document_directory' => 'commun']);
         self::assertResponseStatusCodeSame(422);
-        self::assertSelectorTextContains('main', 'Les images et les documents doivent être dans des dossiers différents.');
+        self::assertSelectorTextContains('main', 'Les images, les documents et les vidéos doivent être dans des dossiers différents.');
 
         $this->submit(['image_directory' => 'contenu/images']);
         self::assertResponseRedirects();

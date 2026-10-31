@@ -10,6 +10,7 @@
 #
 # Format d'un composant :
 #   label, description, icon (icône DSFR de la liste de choix)
+#   category   : rubrique de la page des réglages de l'administrateur (ex. « Médias »)
 #   group      : composants consécutifs affichés ensemble (groups/<groupe>.html.twig)
 #   layout     : bloc de colonnes (réglage « columns » « 4-8 », zone « column » répétée)
 #   legacy     : ancien composant, lu et modifiable mais plus proposé
@@ -19,7 +20,8 @@
 #     type        text | textarea | url | choice | media | medias | icon | pictogram
 #     label, hint, required, max_length, default
 #     options     liste de valeurs (valeur: libellé) ou « @nom » d'une liste de « lists »
-#     media_type  image | document (media, medias)
+#     media_type  image | document | video (media, medias)
+#     formats     formats acceptés pour un média (ex. [vtt]), tous par défaut
 #     when        {réglage: [valeurs]} : proposé si le réglage vaut l'une des valeurs
 #     when_filled [réglages] : proposé si l'un est renseigné ; when_empty : réglage : proposé s'il est vide
 #     option_when {valeur: {réglage: [valeurs]}} : valeur de la liste proposée sous condition
@@ -124,6 +126,7 @@ components:
         label: Image
         description: 'Image de la médiathèque : format, taille (petite, moyenne, grande) et légende.'
         icon: fr-icon-image-line
+        category: Médias
         fields:
             media-id: {type: media, label: Image, media_type: image, hint: Le texte alternatif est celui de la médiathèque.}
             ratio: {type: choice, label: Format, options: '@ratios'}
@@ -134,6 +137,7 @@ components:
         label: Colonnes
         description: Texte, composants et médias sur 2 à 4 colonnes de la grille DSFR, l'une sous l'autre sur téléphone.
         icon: fr-icon-layout-grid-line
+        category: Mise en page
         layout: true
         fields:
             columns: {type: choice, label: Disposition, options: '@column_layouts', hint: Largeurs sur une grille de 12 colonnes. Réduire le nombre de colonnes regroupe le contenu des colonnes retirées dans la dernière.}
@@ -160,6 +164,7 @@ components:
         label: Documents à télécharger
         description: 'Un ou plusieurs documents de la médiathèque : liens, cartes ou tuiles (format et poids affichés).'
         icon: fr-icon-download-line
+        category: Médias
         width: {min: 3, per_media: media-ids, when: {variant: [card, tile]}}
         fields:
             media-ids:
@@ -182,6 +187,7 @@ components:
         label: Carte
         description: 'Carte avec lien : plusieurs cartes ou tuiles à la suite forment une grille (1 à 4 colonnes).'
         icon: fr-icon-layout-grid-line
+        category: Liens et actions
         group: cards
         width: {min: 3, grouped: true}
         fields:
@@ -203,6 +209,7 @@ components:
         label: Tuile
         description: 'Tuile avec pictogramme du DSFR et lien : plusieurs tuiles ou cartes à la suite forment une grille.'
         icon: fr-icon-dashboard-3-line
+        category: Liens et actions
         group: cards
         width: {min: 3, grouped: true}
         fields:
@@ -218,6 +225,7 @@ components:
         label: Bouton
         description: 'Bouton lien, icône facultative : plusieurs boutons à la suite forment un groupe.'
         icon: fr-icon-cursor-line
+        category: Liens et actions
         group: buttons
         fields:
             label: {type: text, label: Libellé, required: true, max_length: 100}
@@ -231,6 +239,7 @@ components:
         label: Bouton avec fenêtre
         description: 'Bouton qui ouvre une fenêtre (modale DSFR) : titre et contenu rédigés dans l''éditeur ; en groupe avec les boutons.'
         icon: fr-icon-window-line
+        category: Liens et actions
         group: buttons
         fields:
             label: {type: text, label: Libellé du bouton, required: true, max_length: 100}
@@ -247,6 +256,7 @@ components:
         label: Accordéon
         description: 'Titre et contenu repliable : plusieurs accordéons à la suite forment un groupe.'
         icon: fr-icon-arrow-down-s-line
+        category: Mise en page
         group: accordions
         slots:
             title: {label: Titre, inline: true, required: true}
@@ -256,6 +266,7 @@ components:
         label: Onglet
         description: Plusieurs onglets à la suite forment un groupe d'onglets.
         icon: fr-icon-folder-2-line
+        category: Mise en page
         group: tabs
         slots:
             title: {label: Titre, inline: true, required: true}
@@ -265,6 +276,7 @@ components:
         label: Tableau
         description: 'Tableau DSFR : titre (lu par les lecteurs d''écran), lignes et colonnes rédigées dans l''éditeur, bordures, taille et couleur.'
         icon: fr-icon-table-line
+        category: Mise en page
         fields:
             caption: {type: text, label: Titre du tableau, required: true, max_length: 255, hint: Décrit le contenu du tableau (exigé par le RGAA).}
             caption-display: {type: choice, label: Affichage du titre, options: {top: Au-dessus, bottom: En dessous, hidden: Masqué (lu par les lecteurs d'écran seulement)}}
@@ -279,6 +291,7 @@ components:
         label: Mise en avant
         description: 'Encadré pour une information importante : titre facultatif, couleur et icône au choix.'
         icon: fr-icon-information-line
+        category: Mise en avant et messages
         fields:
             color: {type: choice, label: Couleur, options: '@accent_colors'}
             icon: {type: icon, label: Icône, hint: 'Facultatif : icône du DSFR devant le titre.'}
@@ -290,6 +303,7 @@ components:
         label: Mise en exergue
         description: Texte souligné d'un trait vertical, couleur au choix.
         icon: fr-icon-quote-line
+        category: Mise en avant et messages
         fields:
             color: {type: choice, label: Couleur, options: '@accent_colors'}
         slots:
@@ -299,6 +313,7 @@ components:
         label: Alerte
         description: 'Message d''information, de succès, d''avertissement ou d''erreur ; titre facultatif.'
         icon: fr-icon-alert-line
+        category: Mise en avant et messages
         fields:
             type: {type: choice, label: Type, options: {info: Information, success: Succès, warning: Avertissement, error: Erreur}}
         slots:
@@ -309,6 +324,7 @@ components:
         label: Bandeau d'information
         description: 'Bandeau DSFR (notice) : information, avertissement ou alerte, avec un lien facultatif.'
         icon: fr-icon-notification-3-line
+        category: Mise en avant et messages
         fields:
             type:
                 type: choice
@@ -334,6 +350,7 @@ components:
         label: Badge
         description: 'Courte mention d''état (nouveau, validé, en cours…) : plusieurs badges à la suite forment un groupe.'
         icon: fr-icon-award-line
+        category: Étiquettes et illustrations
         group: badges
         fields:
             label: {type: text, label: Libellé, required: true, max_length: 40}
@@ -345,6 +362,7 @@ components:
         label: Tag
         description: 'Mot-clé, simple ou cliquable : plusieurs tags à la suite forment un groupe.'
         icon: fr-icon-hashtag
+        category: Étiquettes et illustrations
         group: tags
         fields:
             label: {type: text, label: Libellé, required: true, max_length: 60}
@@ -357,6 +375,7 @@ components:
         label: Icône
         description: 'Icône du DSFR, seule ou suivie d''un court texte : taille et alignement au choix.'
         icon: fr-icon-star-line
+        category: Étiquettes et illustrations
         fields:
             icon: {type: icon, label: Icône, required: true}
             text: {type: text, label: Texte, max_length: 150, hint: 'Facultatif : affiché à droite de l''icône.'}
@@ -368,6 +387,7 @@ components:
         label: Pictogramme
         description: 'Illustration du DSFR (pictogramme) : taille, alignement, texte alternatif facultatif.'
         icon: fr-icon-shapes-line
+        category: Étiquettes et illustrations
         fields:
             pictogram: {type: pictogram, label: Pictogramme, required: true}
             alt: {type: text, label: Texte alternatif, max_length: 150, hint: 'Facultatif : si le pictogramme porte une information ; vide, il est décoratif.'}
@@ -378,6 +398,7 @@ components:
         label: Citation
         description: Citation avec son auteur, sa source, une image facultative et une couleur au choix.
         icon: fr-icon-chat-quote-line
+        category: Mise en avant et messages
         fields:
             author: {type: text, label: Auteur, max_length: 255}
             source: {type: text, label: Source, max_length: 255, hint: 'Ex. titre de l''ouvrage ou de l''article.'}
@@ -391,11 +412,20 @@ components:
 
     video:
         label: Vidéo
-        description: Vidéo hébergée sur une plateforme autorisée, avec sa transcription.
+        description: Vidéo d'une plateforme autorisée ou fichier vidéo de la médiathèque, avec sa transcription.
         icon: fr-icon-play-circle-line
+        category: Médias
         width: {min: 4}
         fields:
-            url: {type: url, label: Adresse de la vidéo, hint: 'Plateformes autorisées : {video_hosts} (réglages de l''éditeur).'}
+            source:
+                type: choice
+                label: Source de la vidéo
+                options: {link: Lien vers une plateforme vidéo, upload: Fichier vidéo de la médiathèque}
+                default: link
+            url: {type: url, label: Adresse de la vidéo, hint: 'Plateformes autorisées : {video_hosts} (réglages de l''éditeur).', when: {source: [link]}}
+            media-id: {type: media, media_type: video, label: Fichier vidéo, hint: 'Formats lus par tous les navigateurs : MP4 (H.264) ou WebM.', when: {source: [upload]}}
             title: {type: text, label: Titre de la vidéo, required: true, max_length: 255, hint: Annoncé aux lecteurs d'écran.}
+            subtitles-media-id: {type: media, media_type: document, formats: [vtt], required: false, label: Sous-titres, hint: 'Fichier WebVTT (.vtt) de la médiathèque : sous-titres synchronisés exigés par le RGAA pour une vidéo parlée.', when: {source: [upload]}}
+            poster-media-id: {type: media, media_type: image, required: false, label: Image d'aperçu, hint: 'Facultative : affichée avant la lecture ; à défaut, une image tirée de la vidéo.', when: {source: [upload]}}
             caption: {type: text, label: Légende}
             transcription: {type: textarea, label: Transcription, hint: Texte de la vidéo (exigé par le RGAA pour une vidéo parlée).}

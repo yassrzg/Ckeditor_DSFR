@@ -135,7 +135,7 @@ final class ContentRenderer
     /**
      * Données d'un composant pour son gabarit, false s'il est inconnu ou incomplet (non affiché).
      *
-     * @return array{name: string, definition: ComponentDefinition, values: array<string, ?string>, media: ?Media, medias: list<Media>, mediaSettings: array<int, array<string, string>>, slots: array<string, string>, columns: list<array{span: int, html: string}>, id: string}|false
+     * @return array{name: string, definition: ComponentDefinition, values: array<string, ?string>, media: ?Media, files: array<string, Media>, medias: list<Media>, mediaSettings: array<int, array<string, string>>, slots: array<string, string>, columns: list<array{span: int, html: string}>, id: string}|false
      */
     private function component(\DOMElement $element): array|false
     {
@@ -146,13 +146,15 @@ final class ContentRenderer
 
         $values = [];
         $media = null;
+        $files = [];
         $medias = [];
         $mediaSettings = [];
         $fields = [];
         $raws = [];
         foreach ($definition->fields as $field) {
             $fields[$field->name] = $field;
-            $raws[$field->name] = $element->getAttribute($field->attribute());
+            // Liste de choix absente (contenu antérieur au réglage, ex. source d'une vidéo) : valeur par défaut, comme dans l'éditeur.
+            $raws[$field->name] = $element->getAttribute($field->attribute()) ?: ('choice' === $field->type ? (string) $field->default : '');
         }
         foreach ($definition->fields as $field) {
             $raw = $element->getAttribute($field->attribute());
@@ -162,9 +164,13 @@ final class ContentRenderer
             }
             $value = $this->value($definition, $field, $raw);
             if ('media' === $field->type && null !== $value) {
-                $media = $this->medias[(int) $value] ?? null;
-                if ($media?->getType() !== $field->mediaType) {
-                    $media = $value = null;
+                // Média existant, de la bonne catégorie et d'un format accepté (ex. sous-titres .vtt).
+                $found = $this->medias[(int) $value] ?? null;
+                if (null === $found || !$field->accepts($found)) {
+                    $value = null;
+                } else {
+                    $files[$field->name] = $found;
+                    $media ??= $found;
                 }
             }
             if ('medias' === $field->type && null !== $value) {
@@ -214,7 +220,7 @@ final class ContentRenderer
             }
         }
 
-        return ['name' => $definition->name, 'definition' => $definition, 'values' => $values, 'media' => $media, 'medias' => $medias, 'mediaSettings' => $mediaSettings, 'slots' => $slots, 'columns' => $columns, 'id' => self::uid()];
+        return ['name' => $definition->name, 'definition' => $definition, 'values' => $values, 'media' => $media, 'files' => $files, 'medias' => $medias, 'mediaSettings' => $mediaSettings, 'slots' => $slots, 'columns' => $columns, 'id' => self::uid()];
     }
 
     /**
@@ -370,7 +376,8 @@ final class ContentRenderer
     }
 
     /**
-     * Identifiants des médias cités (data-media-id, data-media-ids) dans tout le contenu, composants imbriqués compris.
+     * Identifiants des médias cités dans tout le contenu, composants imbriqués compris : attributs data-…media-id
+     * (data-media-id, data-poster-media-id…) et data-…media-ids (liste « 12,4,7 »).
      *
      * @return list<int>
      */
@@ -379,12 +386,13 @@ final class ContentRenderer
         $ids = [];
         foreach ($node->childNodes as $child) {
             if ($child instanceof \DOMElement) {
-                if (ctype_digit($child->getAttribute('data-media-id'))) {
-                    $ids[] = (int) $child->getAttribute('data-media-id');
-                }
-                foreach (explode(',', $child->getAttribute('data-media-ids')) as $id) {
-                    if (ctype_digit($id)) {
-                        $ids[] = (int) $id;
+                foreach ($child->attributes ?? [] as $attribute) {
+                    if (str_ends_with($attribute->name, 'media-id') || str_ends_with($attribute->name, 'media-ids')) {
+                        foreach (explode(',', $attribute->value) as $id) {
+                            if (ctype_digit($id)) {
+                                $ids[] = (int) $id;
+                            }
+                        }
                     }
                 }
                 $ids = [...$ids, ...self::mediaIds($child)];

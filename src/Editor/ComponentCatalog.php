@@ -19,8 +19,8 @@ final class ComponentCatalog
 
     private const array FIELD_TYPES = ['text', 'textarea', 'url', 'choice', 'media', 'medias', 'icon', 'pictogram'];
     private const array ITEM_TYPES = ['text', 'choice', 'icon', 'pictogram'];
-    private const array COMPONENT_KEYS = ['label', 'description', 'icon', 'group', 'layout', 'legacy', 'width', 'fields', 'slots', 'enabled'];
-    private const array FIELD_KEYS = ['type', 'label', 'hint', 'required', 'max_length', 'default', 'options', 'media_type', 'when', 'when_filled', 'when_empty', 'option_when', 'items', 'items_when'];
+    private const array COMPONENT_KEYS = ['label', 'description', 'icon', 'category', 'group', 'layout', 'legacy', 'width', 'fields', 'slots', 'enabled'];
+    private const array FIELD_KEYS = ['type', 'label', 'hint', 'required', 'max_length', 'default', 'options', 'media_type', 'formats', 'when', 'when_filled', 'when_empty', 'option_when', 'items', 'items_when'];
     private const array SLOT_KEYS = ['label', 'inline', 'required', 'components', 'tables'];
     /** Obligatoire par défaut selon le type (lien, liste de choix, média). */
     private const array REQUIRED_BY_DEFAULT = ['url', 'choice', 'media', 'medias'];
@@ -74,7 +74,7 @@ final class ComponentCatalog
         return new ComponentDefinition(
             $name, $c['label'], $c['description'], $c['icon'],
             array_values(array_map(static fn (array $f): ComponentField => ComponentField::fromCatalog($f, $videoHosts), $c['fields'])),
-            $c['slots'], $c['group'], $c['layout'], $c['legacy'], $c['width'],
+            $c['slots'], $c['group'], $c['layout'], $c['legacy'], $c['width'], $c['category'] ?? null,
         );
     }
 
@@ -140,6 +140,7 @@ final class ComponentCatalog
             'label' => $c['label'],
             'description' => $c['description'],
             'icon' => $c['icon'],
+            'category' => isset($c['category']) ? (string) $c['category'] : null,
             'group' => isset($c['group']) ? (string) $c['group'] : null,
             'layout' => $layout,
             'legacy' => (bool) ($c['legacy'] ?? false),
@@ -181,7 +182,11 @@ final class ComponentCatalog
         }
         $mediaType = null;
         if (\in_array($type, ['media', 'medias'], true)) {
-            $mediaType = MediaType::tryFrom((string) ($f['media_type'] ?? '')) ?? throw self::error($file, $where.' : media_type image ou document.');
+            $mediaType = MediaType::tryFrom((string) ($f['media_type'] ?? '')) ?? throw self::error($file, $where.' : media_type parmi '.implode(', ', array_column(MediaType::cases(), 'value')).'.');
+        }
+        $formats = array_values(array_map(static fn (mixed $format): string => strtolower((string) $format), (array) ($f['formats'] ?? [])));
+        if ([] !== $formats && 'media' !== $type) {
+            throw self::error($file, $where.' : « formats » seulement pour un réglage media.');
         }
         $required = (bool) ($f['required'] ?? \in_array($type, self::REQUIRED_BY_DEFAULT, true));
         $default = isset($f['default']) ? (string) $f['default'] : ('choice' === $type && $required ? (string) array_key_first($options) : null);
@@ -221,6 +226,7 @@ final class ComponentCatalog
             'optionShowIf' => $optionShowIf,
             'items' => $items,
             'itemsShowIf' => isset($f['items_when']) ? self::condition($file, $where, $f['items_when']) : null,
+            'formats' => $formats,
         ];
     }
 

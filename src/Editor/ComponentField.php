@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Yassrzg\CkeditorDsfrBundle\Editor;
 
+use Yassrzg\CkeditorDsfrBundle\Entity\Media;
 use Yassrzg\CkeditorDsfrBundle\Enum\MediaType;
 
 /**
  * Réglage d'un composant de l'éditeur, enregistré dans l'attribut data-<name> du composant.
- * Types : text, textarea, url, choice (valeurs de options), media (identifiant d'un média de mediaType),
- * medias (identifiants de plusieurs médias de mediaType, dans l'ordre d'affichage : « 12,4,7 »),
+ * Types : text, textarea, url, choice (valeurs de options), media (identifiant d'un média de mediaType, limité
+ * éventuellement à certains formats : formats), medias (identifiants de plusieurs médias de mediaType, dans l'ordre
+ * d'affichage : « 12,4,7 »),
  * icon (classe d'icône du DSFR : « fr-icon-information-line »), pictogram (pictogramme du DSFR : « digital/search »).
  *
  * Conditions d'affichage (fenêtre de réglages) : un réglage, ou une valeur d'une liste, n'est proposé que si un autre
@@ -28,6 +30,7 @@ final readonly class ComponentField
      * @param array<string, array<string, mixed>> $optionShowIf valeur => condition d'affichage de cette valeur
      * @param list<ComponentField>               $items        réglages propres à chaque média (type medias)
      * @param array<string, mixed>|null          $itemsShowIf  condition d'affichage des réglages par média
+     * @param list<string>                       $formats      formats acceptés pour un média (ex. ['vtt']), vide : tous
      */
     private function __construct(
         public string $name,
@@ -43,6 +46,7 @@ final readonly class ComponentField
         public array $optionShowIf = [],
         public array $items = [],
         public ?array $itemsShowIf = null,
+        public array $formats = [],
     ) {
     }
 
@@ -60,6 +64,7 @@ final readonly class ComponentField
             $f['maxLength'], $f['showIf'], $f['optionShowIf'],
             array_values(array_map(static fn (array $item): self => self::fromCatalog($item), $f['items'])),
             $f['itemsShowIf'],
+            $f['formats'] ?? [],
         );
     }
 
@@ -100,7 +105,7 @@ final readonly class ComponentField
     private function with(?array $showIf = null, ?array $optionShowIf = null): self
     {
         return new self($this->name, $this->label, $this->type, $this->required, $this->options, $this->default, $this->mediaType,
-            $this->hint, $this->maxLength, $showIf ?? $this->showIf, $optionShowIf ?? $this->optionShowIf, $this->items, $this->itemsShowIf);
+            $this->hint, $this->maxLength, $showIf ?? $this->showIf, $optionShowIf ?? $this->optionShowIf, $this->items, $this->itemsShowIf, $this->formats);
     }
 
     public static function text(string $name, string $label, bool $required = false, ?string $hint = null, int $maxLength = 500): self
@@ -174,6 +179,12 @@ final readonly class ComponentField
         return $this->showIf['filled'] ? $filled : !$filled;
     }
 
+    /** Média accepté par ce réglage : bonne catégorie et, si le réglage les limite, bon format. */
+    public function accepts(Media $media): bool
+    {
+        return $media->getType() === $this->mediaType && ([] === $this->formats || \in_array(strtolower($media->getFormat()), $this->formats, true));
+    }
+
     /** Attribut des réglages par média (JSON), pour un champ medias avec items. */
     public function settingsAttribute(): string
     {
@@ -200,6 +211,7 @@ final readonly class ComponentField
             'options' => $this->options ?: null,
             'default' => $this->default,
             'mediaType' => $this->mediaType?->value,
+            'formats' => $this->formats ?: null,
             'hint' => $this->hint,
             'maxLength' => $this->maxLength,
             'showIf' => self::conditionForEditor($this->showIf),

@@ -77,6 +77,19 @@ final class ValidationTest extends FunctionalTestCase
         ], $errors);
     }
 
+    public function testVideoMediaMustHaveTheExpectedCategoryAndFormat(): void
+    {
+        $video = $this->createMedia(MediaType::VIDEO, 'Démonstration', 'video.webm');
+        $subtitles = $this->createMedia(MediaType::DOCUMENT, 'Sous-titres', 'subtitles.vtt');
+        $pdf = $this->createMedia(MediaType::DOCUMENT, 'Guide', 'document.pdf');
+
+        self::assertSame([], $this->validator()->validate('<div data-component="video" data-source="upload" data-media-id="'.$video->getId().'" data-title="T" data-subtitles-media-id="'.$subtitles->getId().'"></div>'));
+        self::assertSame(
+            ['« Vidéo » : le média n° '.$pdf->getId().' n\'est pas une vidéo.', '« Vidéo » : « Sous-titres » doit être au format VTT.'],
+            $this->validator()->validate('<div data-component="video" data-source="upload" data-media-id="'.$pdf->getId().'" data-title="T" data-subtitles-media-id="'.$pdf->getId().'"></div>'),
+        );
+    }
+
     public function testEditorFieldShowsTheErrorsAndKeepsNothing(): void
     {
         $form = static::getContainer()->get('form.factory')->createNamedBuilder('page', options: ['csrf_protection' => false])

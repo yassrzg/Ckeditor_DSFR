@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Yassrzg\CkeditorDsfrBundle\Form;
 
 use Yassrzg\CkeditorDsfrBundle\Entity\Media;
+use Yassrzg\CkeditorDsfrBundle\Enum\MediaType;
 use Yassrzg\CkeditorDsfrBundle\Settings\EditorSettings;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -52,7 +53,11 @@ final class MediaFormType extends AbstractType
             ])
             ->add('title', TextType::class, [
                 'label' => 'Titre',
-                'help' => $media->isImage() ? 'Nom de l\'image dans la médiathèque.' : 'Intitulé du lien de téléchargement.',
+                'help' => match ($type) {
+                    MediaType::IMAGE => 'Nom de l\'image dans la médiathèque.',
+                    MediaType::VIDEO => 'Nom de la vidéo dans la médiathèque (le titre annoncé aux lecteurs d\'écran se saisit dans le composant).',
+                    MediaType::DOCUMENT => 'Intitulé du lien de téléchargement.',
+                },
                 'attr' => ['maxlength' => 255],
             ]);
 
@@ -69,7 +74,7 @@ final class MediaFormType extends AbstractType
                     'help' => 'Sans information utile : aucun texte alternatif n\'est lu.',
                     'required' => false,
                 ]);
-        } else {
+        } elseif (MediaType::DOCUMENT === $type) {
             $builder->add('description', TextareaType::class, [
                 'label' => 'Description',
                 'help' => 'Facultatif : texte de la carte de téléchargement.',

@@ -1,39 +1,130 @@
+{#
+ # Réglages de l'éditeur : sommaire latéral, une section par thème (composants, vidéos, images, documents), résumé des
+ # réglages en vigueur en tête. Les réglages des vidéos par lien ou par fichier n'apparaissent que si la source est
+ # cochée (CSS :has, sans JavaScript ; masqués, ils restent envoyés et enregistrés). Bouton « Enregistrer » toujours visible.
+ #}
 {% extends '@CkeditorDsfr/admin/_layout.html.twig' %}
 {% form_theme form '@CkeditorDsfr/form/fields.html.twig' %}
 
 {% block ckeditor_dsfr_title %}Réglages de l’éditeur{% endblock %}
 
+{% macro formats(field) %}{{ field.vars.value|map(e => e|upper)|join(', ') ?: 'aucun' }}{% endmacro %}
+
 {% block ckeditor_dsfr_content %}
+    {% set components = form.enabled_components %}
+    {% set sources = form.video_sources.vars.value %}
+    {% set sections = [
+        {id: 'settings-components', label: 'Composants', icon: 'fr-icon-layout-grid-line'},
+        {id: 'settings-videos', label: 'Vidéos', icon: 'fr-icon-film-line'},
+        {id: 'settings-images', label: 'Images', icon: 'fr-icon-image-line'},
+        {id: 'settings-documents', label: 'Documents', icon: 'fr-icon-file-text-line'},
+    ] %}
+
     <a class="fr-link fr-icon-arrow-left-line fr-link--icon-left" href="{{ path('ckeditor_dsfr_media_index') }}">Médiathèque</a>
-    <h1 class="fr-h2 fr-mt-4v">Réglages de l’éditeur</h1>
-    {{ form_start(form) }}
-        <section class="fr-mb-6v" aria-labelledby="settings-components">
-            <h2 class="fr-h4" id="settings-components">Composants</h2>
-            {{ form_row(form.enabled_components) }}
-        </section>
-        <section class="fr-mb-6v" aria-labelledby="settings-videos">
-            <h2 class="fr-h4" id="settings-videos">Vidéos</h2>
-            <p class="fr-text--sm">Les contenus peuvent intégrer des vidéos hébergées uniquement sur ces plateformes, autorisées aussi dans la
-                politique de sécurité du site (frame-src) : n’ajoutez que des plateformes de confiance. Les adresses de page YouTube,
-                Dailymotion et Vimeo sont converties automatiquement en lecteur intégré.</p>
-            {{ form_row(form.video_hosts) }}
-        </section>
-        <section class="fr-mb-6v" aria-labelledby="settings-images">
-            <h2 class="fr-h4" id="settings-images">Images</h2>
-            {{ form_row(form.image_extensions) }}
-            {{ form_row(form.image_max_size) }}
-            {{ form_row(form.image_directory) }}
-        </section>
-        <section class="fr-mb-6v" aria-labelledby="settings-documents">
-            <h2 class="fr-h4" id="settings-documents">Documents</h2>
-            {{ form_row(form.document_extensions) }}
-            {{ form_row(form.document_max_size) }}
-            {{ form_row(form.document_directory) }}
-        </section>
-        {{ form_rest(form) }}
-        <ul class="fr-btns-group fr-btns-group--inline-md fr-btns-group--icon-left">
-            <li><button type="submit" class="fr-btn fr-btn--icon-left fr-icon-save-line">Enregistrer</button></li>
-            <li><a class="fr-btn fr-btn--secondary fr-btn--icon-left fr-icon-arrow-go-back-fill" href="{{ path('ckeditor_dsfr_media_index') }}">Annuler</a></li>
-        </ul>
-    {{ form_end(form) }}
+    <h1 class="fr-h2 fr-mt-4v fr-mb-2v">Réglages de l’éditeur</h1>
+    <p class="fr-text--lead fr-mb-4w">Ce que les rédacteurs peuvent insérer dans les contenus, et les fichiers qu’ils peuvent envoyer.</p>
+
+    <div class="fr-grid-row fr-grid-row--gutters">
+        <div class="fr-col-12 fr-col-md-3">
+            <nav class="fr-sidemenu fr-sidemenu--sticky" aria-labelledby="settings-menu-title">
+                <div class="fr-sidemenu__inner">
+                    <button type="button" class="fr-sidemenu__btn" aria-controls="settings-menu" aria-expanded="false">Dans cette page</button>
+                    <div class="fr-collapse" id="settings-menu">
+                        <p class="fr-sidemenu__title" id="settings-menu-title">Réglages</p>
+                        <ul class="fr-sidemenu__list">
+                            {% for section in sections %}
+                                <li class="fr-sidemenu__item"><a class="fr-sidemenu__link" href="#{{ section.id }}">{{ section.label }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        <div class="fr-col-12 fr-col-md-9">
+            {# Résumé des réglages enregistrés (valeurs du formulaire) : une ligne par thème, lien vers sa section. #}
+            <ul class="cmp-settings__summary fr-raw-list fr-mb-4w" aria-label="Réglages en vigueur">
+                <li><span class="fr-icon-layout-grid-line" aria-hidden="true"></span><a class="fr-link" href="#settings-components">Composants</a>
+                    {{ components.vars.value|length }} proposés sur {{ components|length }}</li>
+                <li><span class="fr-icon-film-line" aria-hidden="true"></span><a class="fr-link" href="#settings-videos">Vidéos</a>
+                    {{ {0: 'non proposées', 1: 'link' in sources ? 'par lien' : 'par fichier', 2: 'par lien et par fichier'}[sources|length] }}</li>
+                <li><span class="fr-icon-image-line" aria-hidden="true"></span><a class="fr-link" href="#settings-images">Images</a>
+                    {{ _self.formats(form.image_extensions) }} · {{ form.image_max_size.vars.value }} Mo</li>
+                <li><span class="fr-icon-file-text-line" aria-hidden="true"></span><a class="fr-link" href="#settings-documents">Documents</a>
+                    {{ form.document_extensions.vars.value|length }} formats · {{ form.document_max_size.vars.value }} Mo</li>
+            </ul>
+
+            {{ form_start(form, {attr: {class: 'cmp-settings'}}) }}
+                <section class="cmp-settings__section" aria-labelledby="settings-components">
+                    <h2 class="fr-h4 cmp-settings__title" id="settings-components"><span class="fr-icon-layout-grid-line" aria-hidden="true"></span> Composants</h2>
+                    <p class="fr-text--sm">{{ components.vars.help }}</p>
+                    {# Une rubrique par catégorie du catalogue (clé « category »), cases sur deux colonnes. #}
+                    {% for group in components.vars.choices %}
+                        <fieldset class="fr-fieldset cmp-settings__group" aria-labelledby="{{ components.vars.id }}-{{ loop.index }}-legend">
+                            <legend class="fr-fieldset__legend fr-text--md" id="{{ components.vars.id }}-{{ loop.index }}-legend">{{ group.label }}</legend>
+                            <div class="cmp-settings__choices">
+                                {% for child in components|filter(c => c.vars.attr['data-category'] == group.label) %}
+                                    <div class="fr-checkbox-group">
+                                        <input type="checkbox" id="{{ child.vars.id }}" name="{{ child.vars.full_name }}" value="{{ child.vars.value }}"{% if child.vars.checked %} checked{% endif %} aria-describedby="{{ child.vars.id }}-hint">
+                                        <label class="fr-label" for="{{ child.vars.id }}">{{ child.vars.label }}
+                                            <span class="fr-hint-text" id="{{ child.vars.id }}-hint">{{ child.vars.attr['data-description'] }}</span>
+                                        </label>
+                                    </div>
+                                    {% do child.setRendered %}
+                                {% endfor %}
+                            </div>
+                        </fieldset>
+                    {% endfor %}
+                    {% do components.setRendered %}
+                </section>
+
+                <section class="cmp-settings__section" aria-labelledby="settings-videos">
+                    <h2 class="fr-h4 cmp-settings__title" id="settings-videos"><span class="fr-icon-film-line" aria-hidden="true"></span> Vidéos</h2>
+                    {{ form_row(form.video_sources) }}
+
+                    <div class="cmp-settings__part cmp-settings__part--link">
+                        <h3 class="fr-h6">Vidéos par lien</h3>
+                        <p class="fr-text--sm">Seules ces plateformes sont intégrées dans les pages ; elles sont aussi autorisées dans la politique de
+                            sécurité du site (frame-src) : n’ajoutez que des plateformes de confiance. Les adresses de page YouTube, Dailymotion et
+                            Vimeo sont converties automatiquement en lecteur intégré.</p>
+                        {{ form_row(form.video_hosts) }}
+                    </div>
+
+                    <div class="cmp-settings__part cmp-settings__part--upload">
+                        <h3 class="fr-h6">Vidéos envoyées</h3>
+                        {% if 'vtt' not in form.document_extensions.vars.value %}
+                            <div class="fr-notice fr-notice--info fr-mb-4v">
+                                <div class="fr-container"><div class="fr-notice__body"><p class="fr-notice__title">Sous-titres : cochez le format VTT dans la section
+                                    <a href="#settings-documents">Documents</a> pour que les rédacteurs puissent les ajouter.</p></div></div>
+                            </div>
+                        {% endif %}
+                        {{ form_row(form.video_extensions, {attr: {inline: true}}) }}
+                        <div class="cmp-settings__pair">
+                            {{ form_row(form.video_max_size) }}
+                            {{ form_row(form.video_directory) }}
+                        </div>
+                    </div>
+                </section>
+
+                {% for type in [{key: 'image', id: 'settings-images', label: 'Images', icon: 'fr-icon-image-line'}, {key: 'document', id: 'settings-documents', label: 'Documents', icon: 'fr-icon-file-text-line'}] %}
+                    <section class="cmp-settings__section" aria-labelledby="{{ type.id }}">
+                        <h2 class="fr-h4 cmp-settings__title" id="{{ type.id }}"><span class="{{ type.icon }}" aria-hidden="true"></span> {{ type.label }}</h2>
+                        {{ form_row(form[type.key ~ '_extensions'], {attr: {inline: true}}) }}
+                        <div class="cmp-settings__pair">
+                            {{ form_row(form[type.key ~ '_max_size']) }}
+                            {{ form_row(form[type.key ~ '_directory']) }}
+                        </div>
+                    </section>
+                {% endfor %}
+
+                {{ form_rest(form) }}
+                <div class="cmp-settings__actions">
+                    <ul class="fr-btns-group fr-btns-group--inline fr-btns-group--icon-left">
+                        <li><button type="submit" class="fr-btn fr-btn--icon-left fr-icon-save-line">Enregistrer<span class="fr-hidden fr-unhidden-sm"> les réglages</span></button></li>
+                        <li><a class="fr-btn fr-btn--secondary fr-btn--icon-left fr-icon-arrow-go-back-fill" href="{{ path('ckeditor_dsfr_media_index') }}">Annuler</a></li>
+                    </ul>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
 {% endblock %}
