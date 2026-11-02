@@ -1,5 +1,14 @@
 # Changements
 
+## 1.2.0 — 2026-11-02
+
+- Plusieurs éditeurs dans une page : la fenêtre « Insérer un composant » (réglages des composants, médiathèque, ajout
+  rapide) et le catalogue des composants sont rendus une seule fois, par le premier éditeur, et partagés par les
+  suivants (environ 199 Ko de HTML et 1 090 éléments en moins par éditeur supplémentaire). Chaque éditeur désigne la
+  fenêtre par `data-ckeditor-dsfr-dialog-value` ; le catalogue est porté par la fenêtre (`data-components`) ; les actions
+  de la fenêtre sont traitées par l'éditeur qui l'a ouverte. Aucun changement pour les contenus enregistrés.
+- Fonctions Twig `ckeditor_dsfr_render_dialog()` et `ckeditor_dsfr_dialog_id()` (thème du champ `EditorType`).
+
 ## 1.1.0 — 2026-11-02
 
 - Bloc **Colonnes** : 2 à 4 colonnes de la grille DSFR (12 dispositions), côte à côte à partir de la tablette ou de

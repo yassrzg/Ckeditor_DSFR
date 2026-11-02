@@ -95,7 +95,8 @@ final class SettingsTest extends FunctionalTestCase
         self::assertCount(1, $editor);
         // L'éditeur reçoit tous les composants (un composant retiré déjà présent reste lu et réenregistré) ; seuls les
         // composants proposés sont insérables et figurent dans la liste du choix.
-        $insertable = array_column(json_decode((string) $editor->attr('data-ckeditor-dsfr-components-value'), true), 'insertable', 'name');
+        $dialog = $page->filter('#'.$editor->attr('data-ckeditor-dsfr-dialog-value'));
+        $insertable = array_column(json_decode((string) $dialog->attr('data-components'), true), 'insertable', 'name');
         self::assertFalse($insertable['tab']);
         self::assertFalse($insertable['quote']);
         self::assertFalse($insertable['video'], 'Aucun hôte vidéo : composant non proposé.');
@@ -111,6 +112,16 @@ final class SettingsTest extends FunctionalTestCase
 
         $form->submit(['content' => '<p onclick="x()">Texte</p><script>alert(1)</script>']);
         self::assertSame('<p>Texte</p>', $form->get('content')->getData(), 'Saisie filtrée à l\'enregistrement.');
+
+        // Plusieurs éditeurs dans la page : une seule fenêtre et un seul catalogue, partagés.
+        static::getContainer()->get('services_resetter')->reset(); // nouvelle page (nouvelle requête)
+        $form = static::getContainer()->get('form.factory')->createNamedBuilder('double', options: ['csrf_protection' => false])
+            ->add('first', EditorType::class)->add('second', EditorType::class)->getForm();
+        $page = new Crawler(static::getContainer()->get('twig')->createTemplate('{{ form_widget(form) }}')->render(['form' => $form->createView()]));
+        self::assertCount(2, $page->filter('[data-controller="ckeditor-dsfr"]'));
+        self::assertCount(1, $page->filter('dialog[data-components]'));
+        self::assertSame(['ckeditor-dsfr-component-dialog', 'ckeditor-dsfr-component-dialog'], $page->filter('[data-controller="ckeditor-dsfr"]')->each(static fn (Crawler $e): string => (string) $e->attr('data-ckeditor-dsfr-dialog-value')));
+        self::assertCount(2, $page->filter('[data-ckeditor-dsfr-target="opener"][aria-controls="ckeditor-dsfr-component-dialog"]'));
     }
 
     public function testStorageDirectoryChangeMovesExistingFiles(): void

@@ -33,18 +33,35 @@ const NOTICE_DELAY = 10000;
 // Catégories de la médiathèque (MediaType côté PHP).
 const MEDIA_TYPES = ['image', 'document', 'video'];
 
-export default class extends Controller {
-    static targets = [
-        'source', 'status', 'opener', 'dialog', 'title', 'chooser', 'panel', 'submit', 'back', 'footer',
-        'library', 'librarySearch', 'libraryStatus', 'libraryGrid', 'libraryValidate', 'libraryAdd', 'libraryAddButton', 'notices',
-    ];
-    static values = { components: Array, mediaUrl: String, quickAddUrl: String, artworkUrl: String, label: String };
+/*
+ * Fenêtre « Insérer un composant » et catalogue des composants : rendus une fois par page (dans le premier éditeur) et
+ * partagés par tous les éditeurs. Ses éléments (cibles ci-dessous) sont cherchés dans la fenêtre, où qu'elle soit ; ses
+ * actions sont traitées par l'éditeur qui l'a ouverte (activeEditor).
+ */
+const DIALOG_TARGETS = [
+    'dialog', 'title', 'chooser', 'panel', 'submit', 'back', 'footer',
+    'library', 'librarySearch', 'libraryStatus', 'libraryGrid', 'libraryValidate', 'libraryAdd', 'libraryAddButton',
+];
+const DIALOG_ACTIONS = [
+    'choose', 'back', 'submit', 'refreshConditions', 'focusEditor', 'openLibrary', 'renderLibrary', 'validateLibrary', 'closeLibrary',
+    'addMedia', 'saveMedia', 'cancelMedia', 'moveMedia', 'removeMedia', 'resetItemSetting',
+];
+let activeEditor = null;
+
+export default class EditorController extends Controller {
+    static targets = ['source', 'status', 'opener', 'notices'];
+    static values = { dialog: String, mediaUrl: String, quickAddUrl: String, artworkUrl: String, label: String };
+
+    get dialogElement() {
+        return document.getElementById(this.dialogValue);
+    }
 
     async connect() {
-        this.definitions = new Map(this.componentsValue.map((definition) => [definition.name, definition]));
+        const components = JSON.parse(this.dialogElement?.dataset.components ?? '[]');
+        this.definitions = new Map(components.map((definition) => [definition.name, definition]));
         this.media = { image: new Map(), document: new Map(), video: new Map(), icon: new Map(), pictogram: new Map() };
         this.openItems = new Set();
-        const Components = createComponentsPlugin(this.componentsValue, {
+        const Components = createComponentsPlugin(components, {
             open: (options) => this.open(options),
             renderPreview: (dom, definition, values) => this.renderPreview(dom, definition, values),
         });
@@ -93,6 +110,7 @@ export default class extends Controller {
     }
 
     disconnect() {
+        if (activeEditor === this) activeEditor = null;
         document.removeEventListener('turbo:before-cache', this.beforeCache);
         this.destroy();
     }
@@ -146,6 +164,7 @@ export default class extends Controller {
     // --- Fenêtre de réglages ---------------------------------------------------------------------------------------
 
     async open({ mode, element = null, name = null, values = {} }) {
+        activeEditor = this;
         this.dialogState = { mode, element, name: null };
         this.libraryState = null;
         this.cancelMedia();
@@ -874,4 +893,30 @@ export default class extends Controller {
         dom.prepend(title);
         if (details.childElementCount) dom.append(details);
     }
+}
+
+// Cibles de la fenêtre partagée : cherchées dans la fenêtre, quel que soit l'éditeur qui la contient.
+for (const name of DIALOG_TARGETS) {
+    const all = (controller) => {
+        const dialog = controller.dialogElement;
+        if (!dialog) return [];
+        const selector = `[data-${controller.identifier}-target~="${name}"]`;
+        return [...(dialog.matches(selector) ? [dialog] : []), ...dialog.querySelectorAll(selector)];
+    };
+    Object.defineProperty(EditorController.prototype, `${name}Target`, {
+        get() {
+            const element = all(this)[0];
+            if (!element) throw new Error(`Élément « ${name} » absent de la fenêtre des composants.`);
+            return element;
+        },
+    });
+    Object.defineProperty(EditorController.prototype, `${name}Targets`, { get() { return all(this); } });
+}
+
+// Actions déclarées dans la fenêtre (liées à l'éditeur qui la contient) : traitées par l'éditeur qui l'a ouverte.
+for (const name of DIALOG_ACTIONS) {
+    const action = EditorController.prototype[name];
+    EditorController.prototype[name] = function (...args) {
+        return action.apply(activeEditor ?? this, args);
+    };
 }

@@ -2,11 +2,13 @@
  # Thème du champ EditorType (ajouté aux thèmes de formulaire par le bundle) : CKEditor 5 chargé par le contrôleur
  # Stimulus ckeditor-dsfr, fenêtre de réglages des composants générée depuis le ComponentRegistry (champs DSFR, sans
  # attribut name : jamais envoyés avec le formulaire). Le libellé et les erreurs du champ suivent le thème du projet.
+ # La fenêtre et le catalogue des composants sont rendus par le premier éditeur de la page et partagés par les suivants
+ # (identifiant ckeditor_dsfr_dialog_id()) : la page ne les répète pas pour chaque éditeur.
  #}
 {%- block ckeditor_dsfr_widget -%}
-    {%- set dialog_id = id ~ '-component-dialog' -%}
+    {%- set dialog_id = ckeditor_dsfr_dialog_id() -%}
     <div class="ckeditor-dsfr{{ errors|length > 0 ? ' ckeditor-dsfr--error' }}" data-controller="ckeditor-dsfr"
-         data-ckeditor-dsfr-components-value="{{ ckeditor_dsfr_components_config()|json_encode }}"
+         data-ckeditor-dsfr-dialog-value="{{ dialog_id }}"
          data-ckeditor-dsfr-media-url-value="{{ path('ckeditor_dsfr_media_selection', {type: 'image'})|slice(0, -5) }}__TYPE__"
          data-ckeditor-dsfr-artwork-url-value="{{ path('ckeditor_dsfr_artwork') }}"
          data-ckeditor-dsfr-quick-add-url-value="{{ path('ckeditor_dsfr_media_quick_add', {type: 'image'})|slice(0, -5) }}__TYPE__"
@@ -19,7 +21,9 @@
 
         {# Déclencheur DSFR de la fenêtre (actionné par le contrôleur depuis la barre d'outils de l'éditeur). #}
         <button type="button" class="fr-hidden" aria-controls="{{ dialog_id }}" data-fr-opened="false" data-ckeditor-dsfr-target="opener" tabindex="-1">Insérer un composant</button>
-        <dialog id="{{ dialog_id }}" class="fr-modal" aria-labelledby="{{ dialog_id }}-title" data-ckeditor-dsfr-target="dialog" data-action="dsfr.conceal->ckeditor-dsfr#focusEditor">
+        {%- if ckeditor_dsfr_render_dialog() %}
+        <dialog id="{{ dialog_id }}" class="fr-modal" aria-labelledby="{{ dialog_id }}-title" data-ckeditor-dsfr-target="dialog" data-action="dsfr.conceal->ckeditor-dsfr#focusEditor"
+                data-components="{{ ckeditor_dsfr_components_config()|json_encode }}">
             <div class="fr-container fr-container--fluid fr-container-md">
                 <div class="fr-grid-row fr-grid-row--center">
                     <div class="fr-col-12 fr-col-md-10 fr-col-lg-8">
@@ -131,5 +135,6 @@
                 </div>
             </div>
         </dialog>
+        {%- endif %}
     </div>
 {%- endblock ckeditor_dsfr_widget -%}
