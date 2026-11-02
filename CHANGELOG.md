@@ -1,6 +1,6 @@
 # Changements
 
-## 1.1.0 — non publiée
+## 1.1.0 — 2026-11-02
 
 - Bloc **Colonnes** : 2 à 4 colonnes de la grille DSFR (12 dispositions), côte à côte à partir de la tablette ou de
   l'ordinateur, l'une sous l'autre sur téléphone ; texte, médias et tous les composants dans une colonne ; largeur
