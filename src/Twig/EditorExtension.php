@@ -12,24 +12,55 @@ use Yassrzg\CkeditorDsfrBundle\Editor\DsfrArtwork;
 use Yassrzg\CkeditorDsfrBundle\Editor\PlainText;
 use Symfony\Component\Asset\Packages;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Contracts\Service\ResetInterface;
 use Twig\Attribute\AsTwigFilter;
 use Twig\Attribute\AsTwigFunction;
 
 /**
  * Fonctions Twig du bundle : affichage DSFR d'un contenu, description des composants pour l'éditeur, feuille de style.
  */
-final readonly class EditorExtension
+final class EditorExtension implements ResetInterface
 {
+    /** Identifiant de la fenêtre « Insérer un composant », commune aux éditeurs d'une page. */
+    public const string DIALOG_ID = 'ckeditor-dsfr-component-dialog';
+
+    private bool $dialogRendered = false;
+
     public function __construct(
-        private ContentRenderer $renderer,
-        private ComponentRegistry $registry,
-        private DsfrArtwork $artwork,
-        private Packages $packages,
-        private AuthorizationCheckerInterface $authorizationChecker,
-        private string $layout,
+        private readonly ContentRenderer $renderer,
+        private readonly ComponentRegistry $registry,
+        private readonly DsfrArtwork $artwork,
+        private readonly Packages $packages,
+        private readonly AuthorizationCheckerInterface $authorizationChecker,
+        private readonly string $layout,
         /** @var array{admin: string, settings: string, view: string} */
-        private array $roles,
+        private readonly array $roles,
     ) {
+    }
+
+    /**
+     * Vrai pour le premier éditeur de la page seulement : il rend la fenêtre des composants et leur catalogue, que les
+     * éditeurs suivants partagent (ni catalogue ni fenêtre répétés dans la page).
+     */
+    #[AsTwigFunction('ckeditor_dsfr_render_dialog')]
+    public function renderDialog(): bool
+    {
+        if ($this->dialogRendered) {
+            return false;
+        }
+
+        return $this->dialogRendered = true;
+    }
+
+    #[AsTwigFunction('ckeditor_dsfr_dialog_id')]
+    public function dialogId(): string
+    {
+        return self::DIALOG_ID;
+    }
+
+    public function reset(): void
+    {
+        $this->dialogRendered = false;
     }
 
     /** Droit configuré (ckeditor_dsfr.roles) : {% if ckeditor_dsfr_is_granted('settings') %}. */

@@ -129,7 +129,8 @@ return static function (ContainerConfigurator $container): void {
             param('ckeditor_dsfr.roles'),
         ])
         ->tag('twig.attribute_extension')
-        ->tag('twig.runtime');
+        ->tag('twig.runtime')
+        ->tag('kernel.reset', ['method' => 'reset']);
     $services->set('ckeditor_dsfr.video_frame_source_listener', VideoFrameSourceListener::class)
         ->args([service('ckeditor_dsfr.settings'), param('ckeditor_dsfr.content_security_policy')])
         ->tag('kernel.event_listener', ['event' => 'kernel.response', 'method' => 'onKernelResponse', 'priority' => -100]);
