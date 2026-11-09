@@ -33,7 +33,7 @@ final class RenderingTest extends FunctionalTestCase
             .'<div data-component="card" data-title="C" data-url="/site/c"></div>'
             .'<div data-component="download" data-media-ids="'.$guide->getId().','.$model->getId().'" data-variant="card"></div>'
             .'<div data-component="button" data-label="Un" data-url="/site/un" data-style="secondary"></div>'
-            .'<div data-component="button" data-label="Deux" data-url="mailto:a@b.fr" data-style="inconnu"></div>'
+            .'<div data-component="button" data-label="Deux" data-url="mailto:contact@exemple.fr" data-style="inconnu"></div>'
             .'<div data-component="accordion"><div data-slot="title">Question <strong>1</strong></div><div data-slot="body"><p>Réponse</p>'
             .'<div data-component="download" data-media-id="'.$guide->getId().'" data-variant="link"></div></div></div>'
             .'<div data-component="accordion"><div data-slot="title">Question 2</div><div data-slot="body"><p>Réponse 2</p></div></div>'
