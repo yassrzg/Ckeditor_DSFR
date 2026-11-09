@@ -1,5 +1,10 @@
 # Changements
 
+## 1.2.1 — 2026-11-09
+
+- Auteur indiqué dans `composer.json`, la licence et le README ; données d'exemple des tests neutres. Aucun
+  changement de fonctionnement.
+
 ## 1.2.0 — 2026-11-02
 
 - Plusieurs éditeurs dans une page : la fenêtre « Insérer un composant » (réglages des composants, médiathèque, ajout
